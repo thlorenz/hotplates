@@ -1,4 +1,4 @@
-# hotplates [![Build Status](https://secure.travis-ci.org/thlorenz/hotplate.png)](http://travis-ci.org/thlorenz/hotplate)
+# hotplates [![Build Status](https://secure.travis-ci.org/thlorenz/hotplates.png)](http://travis-ci.org/thlorenz/hotplates)
 
 Serve your templates while they are hot!
 
@@ -9,7 +9,7 @@ Registers partials and compiles handlebars templates into a thermos, so you can 
 
 # Installation
 
-`npm install hotplate`
+`npm install hotplates`
 
 # API
 
