@@ -2,3 +2,11 @@
 
 Compiles and stores handlebars templates and registers partials for faster view resolution.
 
+# Examples
+
+# Installation
+
+`npm install handlebars-store`
+
+# API
+
