@@ -1,5 +1,5 @@
 {
-  "name": "handlebars-store",
+  "name": "hotplates",
   "version": "0.0.1",
   "description": "Compiles and stores handlebars templates and registers partials for faster view resolution.",
   "main": "hbm.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/thlorenz/handlebars-store.git"
+    "url": "git://github.com/thlorenz/hotplates.git"
   },
   "keywords": [
     "handlebars",

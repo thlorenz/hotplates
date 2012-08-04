@@ -1,12 +1,15 @@
-# handlebars-store [![Build Status](https://secure.travis-ci.org/thlorenz/handlebars-store.png)](http://travis-ci.org/thlorenz/handlebars-store)
+# hotplates [![Build Status](https://secure.travis-ci.org/thlorenz/hotplate.png)](http://travis-ci.org/thlorenz/hotplate)
 
-Compiles and stores handlebars templates and registers partials for faster view resolution.
+Serve your templates while they are hot!
+
+Registers partials and compiles handlebars templates into a thermos, so you can serv'em while they're hot.
+
 
 # Examples
 
 # Installation
 
-`npm install handlebars-store`
+`npm install hotplate`
 
 # API
 

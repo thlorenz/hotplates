@@ -24,7 +24,7 @@ var assert     =  require('assert')
   ;
 
 function resolve (stubOpts) {
-  return proxyquire.resolve('../hbs', __dirname, { 
+  return proxyquire.resolve('../hotplates', __dirname, { 
       fs         :  fsStub
     , handlebars :  hbStub
     , readdirp   :  function (opts, cb) {
