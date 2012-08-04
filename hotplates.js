@@ -2,19 +2,19 @@ var fs = require('fs')
   , path = require('path')
   , readdirp = require('readdirp')
   , handlebars = require('handlebars')
-  , handledbars = { }
+  , thermos = { }
   ;
 
 function namespace(folders) {
 
-    if (folders === '') return handledbars;
+    if (folders === '') return thermos;
 
     var prefRemoved = folders
         .trim()
         .replace(/^\.\//,'')  // remove './' prefix
         .replace(/^\//, '')   // remove '/' prefix 
       , parts = prefRemoved.split('/')
-      , parent = handledbars;
+      , parent = thermos;
 
     for (var i = 0; i < parts.length; i++) {
         if (typeof parent[parts[i]] == 'undefined') {
@@ -83,7 +83,7 @@ function processPartials (opts, done) {
     );
 }
 
-function store(opts, done) {
+function heat(opts, done) {
 
   function continueWithPartials (err) {
     if (err) done(err);
@@ -103,9 +103,9 @@ function reset() {
 }
 
 module.exports = {
-    store: store
+    heat: heat
   , reset : reset
-  , handledbars: handledbars
+  , thermos: thermos
 };
 
 /*var opts = {

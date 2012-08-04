@@ -11,7 +11,7 @@ var assert     =  require('assert')
   , platesPath =  'some path'
   , hbs
   , readdirpOpts = []
-  , storeOpts = { 
+  , heatOpts = { 
         templates: {
           root            :  'some plates root'
         , directoryFilter :  'some plates directoryFilter'
@@ -36,21 +36,21 @@ function resolve (stubOpts) {
 
 describe('when looking for plates and partials', function () {
   before(function (done) {
-    resolve( { rdp: { files: [], err: null } } ).store(storeOpts, done);
+    resolve( { rdp: { files: [], err: null } } ).heat(heatOpts, done);
   })
 
   it('passes correct templates opts to readdirp', function () {
     var templateOpts = readdirpOpts.shift();
-    assert.equal(templateOpts.root            ,  storeOpts.templates.root);
-    assert.equal(templateOpts.directoryFilter ,  storeOpts.templates.directoryFilter);
+    assert.equal(templateOpts.root            ,  heatOpts.templates.root);
+    assert.equal(templateOpts.directoryFilter ,  heatOpts.templates.directoryFilter);
     assert.equal(templateOpts.fileFilter[0]   ,  '*.hbs');
     assert.equal(templateOpts.fileFilter[1]   ,  '*.handlebars');
   })
 
   it('passes correct partials opts to readdirp', function () {
     var partialOpts = readdirpOpts.shift();
-    assert.equal(partialOpts.root            ,  storeOpts.partials.root);
-    assert.equal(partialOpts.directoryFilter ,  storeOpts.partials.directoryFilter);
+    assert.equal(partialOpts.root            ,  heatOpts.partials.root);
+    assert.equal(partialOpts.directoryFilter ,  heatOpts.partials.directoryFilter);
     assert.equal(partialOpts.fileFilter[0]   ,  '*.hbs');
     assert.equal(partialOpts.fileFilter[1]   ,  '*.handlebars');
   })
@@ -102,17 +102,17 @@ describe('storing templates', function () {
     })
 
     it('returns no error', function (done) {
-      hbs.store(storeOpts, function (err) {
+      hbs.heat(heatOpts, function (err) {
         assert.equal(err, null);
         done();
       })
     })
   
     it('adds handledbar for each plate under its name', function (done) {
-      hbs.store(storeOpts, function (err) {
-        assert.equal(Object.keys(hbs.handledbars).length, 2);
-        assert.equal(hbs.handledbars['plateuno'], memuno);
-        assert.equal(hbs.handledbars['platedos'], memdos);
+      hbs.heat(heatOpts, function (err) {
+        assert.equal(Object.keys(hbs.thermos).length, 2);
+        assert.equal(hbs.thermos['plateuno'], memuno);
+        assert.equal(hbs.thermos['platedos'], memdos);
         done();
       })
     })
@@ -126,10 +126,10 @@ describe('storing templates', function () {
       })
       
       it('adds handledbar for each plate under its name at namespace reflecting subfolders', function (done) {
-        hbs.store(storeOpts, function (err) {
-          assert.equal(Object.keys(hbs.handledbars).length, 1);
-          assert.equal(hbs.handledbars.sub.subsub.plateuno, memuno);
-          assert.equal(hbs.handledbars.sub.subsub.platedos, memdos);
+        hbs.heat(heatOpts, function (err) {
+          assert.equal(Object.keys(hbs.thermos).length, 1);
+          assert.equal(hbs.thermos.sub.subsub.plateuno, memuno);
+          assert.equal(hbs.thermos.sub.subsub.platedos, memdos);
           done();
         })
       })
@@ -144,10 +144,10 @@ describe('storing templates', function () {
       })
       
       it('adds handledbar for each plate under its name at namespace reflecting subfolders', function (done) {
-        hbs.store(storeOpts, function (err) {
-          assert.equal(Object.keys(hbs.handledbars).length, 1);
-          assert.equal(hbs.handledbars.sub.subsub.plateuno, memuno);
-          assert.equal(hbs.handledbars.sub.subsub.platedos, memdos);
+        hbs.heat(heatOpts, function (err) {
+          assert.equal(Object.keys(hbs.thermos).length, 1);
+          assert.equal(hbs.thermos.sub.subsub.plateuno, memuno);
+          assert.equal(hbs.thermos.sub.subsub.platedos, memdos);
           done();
         })
       })
@@ -161,15 +161,15 @@ describe('storing templates', function () {
     });
 
     it('returns no error', function (done) {
-      hbs.store(storeOpts, function (err) {
+      hbs.heat(heatOpts, function (err) {
         assert.equal(err, null);
         done();
       })
     })
   
     it('adds no handledbar', function (done) {
-      hbs.store(storeOpts, function (err) {
-        assert.equal(Object.keys(hbs.handledbars).length, 0);
+      hbs.heat(heatOpts, function (err) {
+        assert.equal(Object.keys(hbs.thermos).length, 0);
         done();
       })
     })
