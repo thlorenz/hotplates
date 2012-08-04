@@ -25,41 +25,75 @@ function namespace(folders) {
     return parent;
 }
 
-function store(opts, cb) {
-    var rdpOpts = {
-        root            :  opts.templatesPath
-      , directoryFilter :  opts.directories
-      , fileFilter      :  [ '*.hbs', '*.handlebars' ]
-      }
-    ;
+function process(opts, processFile, done) {
+  if (!opts) done(null);
+  else {
+    if (!opts.fileFilter) opts.fileFilter = [ '*.hbs', '*.handlebars' ];
 
-  readdirp(rdpOpts, function (err, entries) {
+    readdirp(opts, function (err, entries) {
 
-    if (err) cb(err);
-    else {
-      var handlebarFiles = entries.files
-        , tasks = handlebarFiles.length;
+      if (err) done(err);
+      else {
+        var handlebarFiles = entries.files
+          , tasks = handlebarFiles.length;
 
-      if (tasks === 0) {
-        cb(null);
-        return;
-      }
-      
-      handlebarFiles
-        .forEach(function (file) {
-          fs.readFile(file.fullPath, function (err, plate) {
-            if (err) cb(err);
-            else {
-              var plateName = file.name.substr(0, file.name.length - path.extname(file.name).length)
-                , attachTo = namespace(file.parentDir);
-
-              attachTo[plateName] = handlebars.compile(plate);
-              if (--tasks === 0) cb(null);
-            }
+        if (tasks === 0) {
+          done(null);
+          return;
+        }
+        
+        handlebarFiles
+          .forEach(function (file) {
+            fs.readFile(file.fullPath, function (err, plate) {
+              if (err) done(err);
+              else {
+                processFile(file, plate);
+                if (--tasks === 0) done(null);
+              }
+            });
           });
-        });
-    }
-  });
+      }
+    });
+  }
+} 
+
+function processTemplates (opts, done) {
+  process
+    ( opts
+    , function processFile(file, plate) {
+        var plateName = file.name.substr(0, file.name.length - path.extname(file.name).length)
+          , attachTo = namespace(file.parentDir);
+
+        attachTo[plateName] = handlebars.compile(plate);
+      }
+    , done
+    );
+}
+
+function processPartials (opts, done) {
+  process
+    ( opts
+    , function processFile(file, plate) {
+        var plateName = file.name.substr(0, file.name.length - path.extname(file.name).length)
+          , attachTo = namespace(file.parentDir);
+
+        attachTo[plateName] = handlebars.compile(plate);
+      }
+    , done
+    );
+}
+
+function store(opts, done) {
+
+  function continueWithPartials (err) {
+    if (err) done(err);
+    else processPartials(opts.partials, done);
+  }
+
+  if (!opts.templates && !opts.partials) 
+    throw new Error('Need to either define "templates" or "partials" options.');
+
+  processTemplates(opts.templates, continueWithPartials);
 }
 
 function reset() {
