@@ -55,7 +55,7 @@ describe('when looking for plates and partials', function () {
   })
 })
 
-describe('heating and registering', function () {
+describe('compiling and registering', function () {
   var plateuno         =  'plateuno.hbs'
     , plateunoFullPath =  '/path/plateuno.hbs'
     , platedos         =  'platedos.hbs'
@@ -64,7 +64,7 @@ describe('heating and registering', function () {
     , contdos          =  'contdos'
     , memuno           =  'memuno'
     , memdos           =  'memdos'
-    , platesFiles      =  [
+    , platesFiles = [
         { name      :  plateuno
         , parentDir :  ''
         , fullPath  :  plateunoFullPath
@@ -80,27 +80,30 @@ describe('heating and registering', function () {
   before(function () {
     fsStub.readFile = function (p, cb) { 
       var content;
-      if (path.basename(p) == plateuno) { 
+      if (path.basename(p) === plateuno) { 
         cb(null, contuno);
-      } else if (path.basename(p) == platedos) {
+      } else if (path.basename(p) === platedos) {
         cb(null, contdos);
       } else {
         cb(new Error('Not setup for this plate ' + p));
       }
     }
 
-    hbStub.compile = function(cont) {
-      if (cont == contuno) return memuno;
-      if(cont == contdos) return memdos;
-      throw new Error('Not setup for this content ' + c);
-    }
-
     hbs = resolve({ rdp: { files: platesFiles } });
   })
 
+
   describe('when plates are found in plates path', function () {
     before(function (done) {
-      hbStub.register = function () { throw new Error('no partials should be found and registered'); }
+
+      hbStub.compile = function(cont) {
+        if (cont == contuno) return memuno;
+        if(cont == contdos) return memdos;
+        throw new Error('Not setup for this content ' + c);
+      }
+
+      hbStub.registerPartial = function () { throw new Error('no partials should be found and registered'); }
+
       hbs.heat({ templates: platesOpts }, function (err) {
           error = err;
           done();
@@ -117,13 +120,15 @@ describe('heating and registering', function () {
       assert.equal(hbs.oven['platedos'], memdos);
     })
 
-    describe('when plates where found in absolute subfolder', function () {
+    describe('when plates were found in absolute subfolder', function () {
+      var subfolderPlatefiles;
       before(function (done) {
-        platesFiles.forEach(function (file) {
-          file.parentDir = '/sub/subsub';
+        subfolderPlatefiles = platesFiles.map(function (file) {
+          return { name: file.name, fullPath: file.fullPath, parentDir: '/sub/subsub' };
         });
 
-        hbs = resolve({ rdp: { files: platesFiles } });
+
+        hbs = resolve({ rdp: { files: subfolderPlatefiles } });
         hbs.heat({ templates: platesOpts }, function (err) {
             error = err;
             done();
@@ -137,13 +142,15 @@ describe('heating and registering', function () {
       })
     })
 
-    describe('when plates where found in relative subfolder', function () {
+    describe('when plates were found in relative subfolder', function () {
+      var subfolderPlatefiles;
+
       before(function (done) {
-        platesFiles.forEach(function (file) {
-          file.parentDir = 'sub/subsub';
+        subfolderPlatefiles = platesFiles.map(function (file) {
+          return { name: file.name, fullPath: file.fullPath, parentDir: 'sub/subsub' };
         });
 
-        hbs = resolve({ rdp: { files: platesFiles } });
+        hbs = resolve({ rdp: { files: subfolderPlatefiles } });
         hbs.heat({ templates: platesOpts }, function (err) {
             error = err;
             done();
@@ -175,6 +182,58 @@ describe('heating and registering', function () {
   
     it('adds no handledbar', function () {
       assert.equal(Object.keys(hbs.oven).length, 0);
+    })
+  })
+
+
+  describe('when partials are found in partials path', function () {
+    var memunoName
+      , memdosName;
+
+    before(function (done) {
+
+      hbStub.compile = function () { throw new Error('no plates should be found and compiled'); }
+
+      hbStub.registerPartial = function(name, cont) {
+             if (cont === contuno) memunoName = name;
+        else if (cont === contdos) memdosName = name;
+        else                       throw new Error('Not setup for this content ' + c);
+      }
+
+      hbs = resolve({ rdp: { files: platesFiles } });
+      hbs.heat({ partials: partialsOpts }, function (err) {
+          error = err;
+          done();
+        });
+    })
+
+    it('returns no error', function () {
+      assert.equal(error, null);
+    })
+
+    it('registers partial for each under its name', function () {
+      assert.equal(memunoName, 'plateuno');
+      assert.equal(memdosName, 'platedos');
+    })
+
+    describe('when partials were found in relative subfolder', function () {
+      var subfolderPlatefiles;
+      before(function (done) {
+        subfolderPlatefiles = platesFiles.map(function (file) {
+          return { name: file.name, fullPath: file.fullPath, parentDir: 'sub/subsub' };
+        });
+
+        hbs = resolve({ rdp: { files: subfolderPlatefiles } });
+        hbs.heat({ partials: partialsOpts }, function (err) {
+            error = err;
+            done();
+          });
+      })
+      
+    it('registers partial for each under its name reflecting subfolders', function () {
+        assert.equal(memunoName, 'sub.subsub.plateuno');
+        assert.equal(memdosName, 'sub.subsub.platedos');
+      })
     })
   })
 })

@@ -5,15 +5,22 @@ var fs = require('fs')
   , oven = { }
   ;
 
-function namespace(folders) {
+function folderParts (folder) {
+  var trimmed = folder.trim();
 
-    if (folders === '') return oven;
+  if (trimmed === '') return [];
 
-    var prefRemoved = folders
-        .trim()
-        .replace(/^\.\//,'')  // remove './' prefix
-        .replace(/^\//, '')   // remove '/' prefix 
-      , parts = prefRemoved.split('/')
+  var prefRemoved = trimmed
+      .replace(/^\.\//,'')  // remove './' prefix
+      .replace(/^\//, '')   // remove '/' prefix 
+    ;
+
+    return prefRemoved.split('/');
+}
+
+function namespace(folder) {
+
+    var parts = folderParts(folder)
       , parent = oven;
 
     for (var i = 0; i < parts.length; i++) {
@@ -23,6 +30,10 @@ function namespace(folders) {
         parent = parent[parts[i]];
     }
     return parent;
+}
+
+function plateNameFromPath(file) {
+  return file.name.substr(0, file.name.length - path.extname(file.name).length);
 }
 
 function process(opts, processFile, done) {
@@ -61,7 +72,7 @@ function processTemplates (opts, done) {
   process
     ( opts
     , function processFile(file, plate) {
-        var plateName = file.name.substr(0, file.name.length - path.extname(file.name).length)
+        var plateName = plateNameFromPath(file)
           , attachTo = namespace(file.parentDir);
 
         attachTo[plateName] = handlebars.compile(plate);
@@ -73,11 +84,13 @@ function processTemplates (opts, done) {
 function processPartials (opts, done) {
   process
     ( opts
-    , function processFile(file, plate) {
-        var plateName = file.name.substr(0, file.name.length - path.extname(file.name).length)
-          , attachTo = namespace(file.parentDir);
-
-        attachTo[plateName] = handlebars.compile(plate);
+    , function processFile(file, partial) {
+        var plateName   =  plateNameFromPath(file)
+          , namespaces  =  folderParts(file.parentDir)
+          , partialName =  namespaces.length === 0 ? plateName : namespaces.concat(plateName).join('.')
+          ;
+        
+        handlebars.registerPartial(partialName, partial);
       }
     , done
     );
