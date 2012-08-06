@@ -11,20 +11,20 @@ Assuming your handlebars templates folder looks as follows:
 templates
 ├── index.hbs
 └── partials
-    ├── oven
-    │   ├── filter
-    │   │   ├── collector.hbs
-    │   │   └── handle.hbs
-    │   ├── index.hbs
-    │   ├── rack
-    │   │   └── grille.hbs
-    │   └── top
-    │       ├── burners.hbs
-    │       └── dials.hbs
-    └── site
-        ├── content.hbs
-        ├── footer.hbs
-        └── header.hbs
+....├── oven
+....│   ├── filter
+....│   │   ├── collector.hbs
+....│   │   └── handle.hbs
+....│   ├── index.hbs
+....│   ├── rack
+....│   │   └── grille.hbs
+....│   └── top
+....│       ├── burners.hbs
+....│       └── dials.hbs
+....└── site
+........├── content.hbs
+........├── footer.hbs
+........└── header.hbs
  
 
 1. Heat your templates and pass continuation function:
@@ -53,7 +53,7 @@ This registers the following partials with handlebars:
   oven.top.burners      
   oven.top.dials        
 
-They are now accesible under that name in other templates and partials.
+They are now accessible under that name in other templates and partials.
 
 It also compiles *index* and makes it accessible via `hotplates.oven.index`
 
