@@ -1,8 +1,8 @@
 # hotplates [![Build Status](https://secure.travis-ci.org/thlorenz/hotplates.png)](http://travis-ci.org/thlorenz/hotplates)
 
-Registers partials, compiles handlebars templates and shoves them into the oven so you can serve them hot later.
+Registers partials, compiles [handlebars](http://handlebarsjs.com/) templates and shoves them into the oven so you can serve them hot later.
 
-Oh, and they are namespaced in reflection of the folder structure.
+As an added convenience they are namespaced according to the 'templates' folder structure for easy access.
 
 # Examples
 
@@ -27,7 +27,7 @@ Assuming your handlebars templates folder looks as follows:
             └── header hbs
  
 
-1. Heat your templates and pass continuation function:
+**1. Heat your templates** and pass continuation function:
 
 ```javascript
 hotplates.heat(
@@ -41,26 +41,27 @@ hotplates.heat(
   , renderSite);
 ```
 
-This registers the following partials with handlebars:
+This compiles *index.hbs*, makes it accessible via `hotplates.oven.index` and
+registers the following partials with handlebars:
 
-  site.content          
-  site.footer           
-  site.header           
-  oven.index            
-  oven.filter.collector 
-  oven.filter.handle    
-  oven.rack.grille      
-  oven.top.burners      
-  oven.top.dials        
+    site.content          
+    site.footer           
+    site.header           
+    oven.index            
+    oven.filter.collector 
+    oven.filter.handle    
+    oven.rack.grille      
+    oven.top.burners      
+    oven.top.dials        
 
 They are now accessible under that name in other templates and partials.
 
-It also compiles *index* and makes it accessible via `hotplates.oven.index`
 
-2. In the continuation function start your server, etc. (in this example we'll open index page in the browser):
+**2. In the continuation function start your server**, etc. (in this example we'll open index page in the browser instead):
 
 ```javascript
 function renderSite(err) {
+  // Prepare a normal handlebars context
   var ctx = 
     { site: 
       { title: 'Willie Slater\'s HotPlater'
@@ -80,7 +81,7 @@ function renderSite(err) {
         }
     };
 
-
+  // Render the index page using the context
   var rendered = hotplates.oven.index(ctx);
   fs.writeFileSync('./index.html', rendered);
 
