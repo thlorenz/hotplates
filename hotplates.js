@@ -58,7 +58,7 @@ function process(opts, processFile, done) {
             fs.readFile(file.fullPath, function (err, plate) {
               if (err) done(err);
               else {
-                processFile(file, plate);
+                processFile(file, plate.toString());
                 if (--tasks === 0) done(null);
               }
             });
@@ -110,8 +110,11 @@ function heat(opts, hot) {
 }
 
 function burn() {
-  Object.keys(handledbars).forEach(function (key) {
-    delete handledbars[key];
+  Object.keys(oven).forEach(function (key) {
+    delete oven[key];
+  });
+  Object.keys(handlebars.partials).forEach(function (key) {
+    delete handlebars.partials[key]; 
   });
 }
 
