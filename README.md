@@ -127,7 +127,7 @@ refer to its [options documentation](https://github.com/thlorenz/readdirp#option
 
 After you heated your templates, they are shoved into the oven, namespaced according to the path they where found in.
 
-E.g., a template found at 'site/reader/book' will be stored as a compiled `Function` under `hotplates.oven.site.reader.book`.
+E.g., a template found at 'site/reader/book.hbs' will be stored as a compiled `Function` under `hotplates.oven.site.reader.book`.
 
 ## Registered Partials
 
@@ -135,7 +135,7 @@ Partials are registered in a similar fashion, but not shoved into the oven as th
 
 However the namespacing schema for them is exactly the same.
 
-Assuming the partial root was 'templates/partials', a partial found in 'templates/partials/book/page' 
+Assuming the partial root was 'templates/partials', a partial found at 'templates/partials/book/page.hbs' 
 will be accessible in other templates and partials under the name `book.page`.
 
 ## Burning templates
