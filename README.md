@@ -7,8 +7,7 @@ Oh, and they are namespaced in reflection of the folder structure.
 # Examples
 
 Assuming your handlebars templates folder looks as follows:
-
-  templates
+` templates
       ├── index.hbs
       └── partials
           ├── oven
@@ -25,6 +24,7 @@ Assuming your handlebars templates folder looks as follows:
               ├── content.hbs
               ├── footer.hbs
               └── header.hbs
+`
 
 1. Heat your templates and pass continuation function:
 
