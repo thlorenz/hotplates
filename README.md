@@ -8,23 +8,23 @@ Oh, and they are namespaced in reflection of the folder structure.
 
 Assuming your handlebars templates folder looks as follows:
 
-templates
-├── index.hbs
-└── partials
-....├── oven
-....│   ├── filter
-....│   │   ├── collector.hbs
-....│   │   └── handle.hbs
-....│   ├── index.hbs
-....│   ├── rack
-....│   │   └── grille.hbs
-....│   └── top
-....│       ├── burners.hbs
-....│       └── dials.hbs
-....└── site
-........├── content.hbs
-........├── footer.hbs
-........└── header.hbs
+    templates
+    ├── index.hbs
+    └── partials
+    ....├── oven
+    ....│   ├── filter
+    ....│   │   ├── collector.hbs
+    ....│   │   └── handle.hbs
+    ....│   ├── index.hbs
+    ....│   ├── rack
+    ....│   │   └── grille.hbs
+    ....│   └── top
+    ....│       ├── burners.hbs
+    ....│       └── dials.hbs
+    ....└── site
+    ........├── content.hbs
+    ........├── footer.hbs
+    ........└── header.hbs
  
 
 1. Heat your templates and pass continuation function:
