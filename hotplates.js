@@ -1,11 +1,12 @@
-var fs            =  require('fs')
-  , path          =  require('path')
-  , readdirp      =  require('readdirp')
-  , handlebars    =  require('handlebars')
-  , watcher       = require('./watcher')
-  , oven          =  { }
-  , templateFiles =  [ ]
-  , partialFiles  =  [ ]
+var fs                 =  require('fs')
+  , path               =  require('path')
+  , readdirp           =  require('readdirp')
+  , handlebars         =  require('handlebars')
+  , watcher            =  require('./watcher')
+  , oven               =  { }
+  , templateFiles      =  [ ]
+  , partialFiles       =  [ ]
+  , watchedDirectories =  [ ]
   ;
 
 function folderParts (folder) {
@@ -39,7 +40,7 @@ function plateNameFrom(filename) {
   return filename.substr(0, filename.length - path.extname(filename).length);
 }
 
-function process(opts, processFile, done) {
+function process(opts, watch, processFile, done) {
   if (!opts) done(null);
   else {
 
@@ -67,6 +68,20 @@ function process(opts, processFile, done) {
               }
             });
           });
+
+        // we only need to gather directories if we need to watch them
+        if (watch) {
+
+          function unwatched (directory) {
+            return watchedDirectories
+              .map(function (d) { return d.fullPath; })
+              .indexOf(directory.fullPath) < 0;
+          }
+
+          entries.directories.forEach(function (directory) {
+              if (unwatched(directory)) watchedDirectories.push(directory);  
+          });
+        }
       }
     });
   }
@@ -88,9 +103,12 @@ function processPartial(file, partial) {
 }
 
 function heat(opts, hot) {
+  var watch = opts.watch;
+
   function processTemplates (opts, done) {
     process 
       ( opts
+      , watch
       , function(file, plate) { processTemplate(file, plate); templateFiles.push(file); }
       , done
       );
@@ -99,20 +117,30 @@ function heat(opts, hot) {
   function processPartials (opts, done) {
     process 
       ( opts
+      , watch
       , function(file, plate) { processPartial(file, plate); partialFiles.push(file); }
       , done
       );
   }
 
-  function continueWithPartials (err) {
+  function thenProcessPartials (err) {
     if (err) hot(err);
-    else processPartials(opts.partials, hot);
+    else processPartials(opts.partials, thenWatch);
+  }
+
+  function thenWatch (err) {
+    if (err) hot(err);
+    else if (!opts.watch) hot();
+    else { 
+      watcher.create(templateFiles, partialFiles, watchedDirectories);
+      hot();
+    }
   }
 
   if (!opts.templates && !opts.partials) 
     throw new Error('Need to either define "templates" or "partials" options.');
 
-  processTemplates(opts.templates, continueWithPartials);
+  processTemplates(opts.templates, thenProcessPartials);
 }
 
 function burn() {
@@ -124,6 +152,7 @@ function burn() {
   });
   templateFiles = [];
   partialFiles = [];
+  watchedDirectories = [];
 
   return module.exports;
 }

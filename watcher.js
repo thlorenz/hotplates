@@ -1,8 +1,8 @@
-var fs           =  require('fs')
-  , events =  require('events')
-  , util         =  require('util')
-  , watchers     =  { }
-  , isWindows    =  process.platform === 'win32'
+var fs        =  require('fs')
+  , events    =  require('events')
+  , util      =  require('util')
+  , watchers  =  { }
+  , isWindows =  process.platform ===  'win32'
   ;
 
 function watch(file, eventName, update) {
