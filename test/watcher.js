@@ -88,7 +88,7 @@ describe('when i create a watcher with template and partial files', function () 
       }
     }
 
-    sut = resolve().create(plateFiles, partialFiles);
+    sut = resolve().create(plateFiles, partialFiles, []);
 
     sut.on('templateChanged', function (file, content) {
       changedPlate = file;
@@ -188,6 +188,48 @@ describe('when i create a watcher with template and partial files', function () 
     it('triggers file changed with file and new content', function () {
       changedFile.name.should.equal(partialdos);  
       changedFileContent.should.equal(partialcontdos);
+    })
+  })
+})
+
+describe('when i create a watcher with template directories', function () {
+  var diruno = { fullPath: '/path/to/diruno' }
+    , dirdos = { fullPath: '/path/to/dirdos' }
+    , templateDirectories = [ diruno, dirdos ]
+    , changeIn = { }
+    , watchedDirectories = []
+    , sut
+    ;
+
+  before(function () {
+    fsStub.watchFile = function (directory, opts, cb) {
+      changeIn[directory] = cb;
+      watchedDirectories.push(directory);
+    };
+
+    sut = resolve().create([], [], templateDirectories);
+  })
+
+  it('watches all template directories', function () {
+    watchedDirectories.should.include(diruno.fullPath);
+    watchedDirectories.should.include(dirdos.fullPath);
+  })
+  
+  describe('when fs.watch says a directory was "renamed" e.g., when a file was added', function () {
+    
+    var changedDirectories;
+    before(function () {
+      changedDirectories = [];
+      sut.on('directoryChanged', function (directory) {
+        changedDirectories.push(directory);
+      });
+
+      changeIn[diruno.fullPath]('rename');
+    })
+
+    it('emits directoryChanged with changed directory only', function () {
+      changedDirectories.should.have.lengthOf(1);
+      changedDirectories[0].fullPath.should.equal(diruno.fullPath);
     })
   })
 })

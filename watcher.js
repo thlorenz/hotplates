@@ -5,7 +5,7 @@ var fs           =  require('fs')
   , isWindows    =  process.platform === 'win32'
   ;
 
-function watch(file, update) {
+function watch(file, eventName, update) {
   var fullPath = file.fullPath;
 
   if (watchers[fullPath]) return;
@@ -15,18 +15,20 @@ function watch(file, update) {
   if (isWindows) {
     // slower, but oh well
     fs.watch(fullPath, function (event) {
-      if (event === 'change') update(fullPath);
+      console.log('%s === %s', event, eventName);
+      if (event === eventName) update(fullPath);
     });
   } else {
     fs.watchFile(fullPath, { persistent: true, interval: 100 }, function (event) {
-      if (event === 'change') update(file);
+      if (event === eventName) update(file);
     });
   }
 }
 
-function Watcher (templateFiles, partialFiles) {
-  this.templateFiles = templateFiles;
-  this.partialFiles = partialFiles;
+function Watcher (templateFiles, partialFiles, templateDirectories) {
+  this.templateFiles       =  templateFiles;
+  this.partialFiles        =  partialFiles;
+  this.templateDirectories =  templateDirectories;
 }
 
 util.inherits(Watcher, events.EventEmitter);
@@ -36,7 +38,7 @@ Watcher.prototype.watchTemplatesAndPartials = function () {
   var self = this;
 
   function keepWarm(file, process) {
-    watch(file, function (file) {
+    watch(file, 'change', function (file) {
       fs.readFile(file.fullPath,function (err, content) {
         if (err) cb(err);
         else process(file, content);
@@ -62,15 +64,22 @@ Watcher.prototype.watchTemplatesAndPartials = function () {
     });
   }
 
+  function watchDirectories() {
+    self.templateDirectories.forEach(function (directory) {
+      watch(directory, 'rename', function (file) {
+        self.emit('directoryChanged', directory);
+      });
+    });
+  }
+
   watchTemplates();
   watchPartials();
-  
-  // TODO: Watch all template folders for added/removed files
+  watchDirectories();
 };
 
 module.exports = {
-  create: function (templateFiles, partialFiles) {
-    var watcher = new Watcher(templateFiles, partialFiles);
+  create: function (templateFiles, partialFiles, templateDirectories) {
+    var watcher = new Watcher(templateFiles, partialFiles, templateDirectories);
     watcher.watchTemplatesAndPartials();
     return watcher;
   }
