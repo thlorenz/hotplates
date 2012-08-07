@@ -41,21 +41,33 @@ describe('when i create a watcher with template and partial files', function () 
         , fullPath  :  partialdosFullPath
         }
       ]
- 
-  fsStub.readFile = function (p, cb) { 
-    // plates
-    if (path.basename(p) === plateuno) { 
-      cb(null, platecontuno);
-    } else if (path.basename(p) === platedos) {
-      cb(null, platecontdos);
-    } else if (path.basename(p) === plateuno) { 
-      cb(null, platecontuno);
-    } else if (path.basename(p) === platedos) {
-      cb(null, platecontdos);
-    } else {
-      cb(new Error('Not setup for this plate ' + p));
+    , watchedFiles
+    ;
+
+  before(function () {
+    watchedFiles = [];
+
+    fsStub.watchFile = function (file, cb) {
+      watchedFiles.push(file);      
+    };
+  
+    fsStub.readFile = function (p, cb) { 
+      // plates
+      if (path.basename(p) === plateuno) { 
+        cb(null, platecontuno);
+      } else if (path.basename(p) === platedos) {
+        cb(null, platecontdos);
+      // partials
+      } else if (path.basename(p) === partialuno) { 
+        cb(null, partialcontuno);
+      } else if (path.basename(p) === partialdos) {
+        cb(null, partialcontdos);
+      } else {
+        cb(new Error('Not setup for this plate ' + p));
+      }
     }
-  }
+  })
+
   
 })
 
