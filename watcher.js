@@ -48,6 +48,7 @@ Watcher.prototype.watchTemplatesAndPartials = function () {
     self.templateFiles.forEach(function (file) {
       keepWarm(file, function (err, plate) {
         self.emit('templateChanged', file, plate);
+        self.emit('fileChanged', file, plate);
       });
     });
   }
@@ -56,6 +57,7 @@ Watcher.prototype.watchTemplatesAndPartials = function () {
     self.partialFiles.forEach(function (file) {
       keepWarm(file, function (err, partial) {
         self.emit('partialChanged', file, partial);
+        self.emit('fileChanged', file, partial);
       });
     });
   }

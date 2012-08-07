@@ -50,8 +50,19 @@ describe('when i create a watcher with template and partial files', function () 
     , changedPlateContent
     , changedPartial
     , changedPartialContent
+    , changedFile
+    , changedFileContent
     , sut
     ;
+
+  function reset() {
+    changedPlate = null;
+    changedPlateContent = null;
+    changedPartial = null;
+    changedPartialContent = null;
+    changedFile = null;
+    changedFileContent = null;
+  }
 
   before(function () {
     watchedFiles = [];
@@ -88,6 +99,12 @@ describe('when i create a watcher with template and partial files', function () 
       changedPartial = file;
       changedPartialContent = content;
     });
+
+    // Triggered for templates and partials
+    sut.on('fileChanged', function (file, content) {
+      changedFile = file;
+      changedFileContent = content;
+    });
   })
 
   it('watches plate files', function () {
@@ -105,8 +122,7 @@ describe('when i create a watcher with template and partial files', function () 
   describe('when plateuno changed', function () {
 
     before(function () {
-      changedPlate = null;
-      changedPlateContent = null;
+      reset();
       fileChanged[plateunoFullPath]('change');  
     })
 
@@ -114,13 +130,17 @@ describe('when i create a watcher with template and partial files', function () 
       changedPlate.name.should.equal(plateuno);  
       changedPlateContent.should.equal(platecontuno);
     })
+
+    it('triggers file changed with file and new content', function () {
+      changedFile.name.should.equal(plateuno);  
+      changedFileContent.should.equal(platecontuno);
+    })
   })
 
   describe('when platedos changed', function () {
 
     before(function () {
-      changedPlate = null;
-      changedPlateContent = null;
+      reset();
       fileChanged[platedosFullPath]('change');  
     })
 
@@ -128,13 +148,17 @@ describe('when i create a watcher with template and partial files', function () 
       changedPlate.name.should.equal(platedos);  
       changedPlateContent.should.equal(platecontdos);
     })
+
+    it('triggers file changed with file and new content', function () {
+      changedFile.name.should.equal(platedos);  
+      changedFileContent.should.equal(platecontdos);
+    })
   })
 
   describe('when partialuno changed', function () {
 
     before(function () {
-      changedPartial = null;
-      changedPartialContent = null;
+      reset();
       fileChanged[partialunoFullPath]('change');  
     })
 
@@ -142,19 +166,28 @@ describe('when i create a watcher with template and partial files', function () 
       changedPartial.name.should.equal(partialuno);  
       changedPartialContent.should.equal(partialcontuno);
     })
+
+    it('triggers file changed with file and new content', function () {
+      changedFile.name.should.equal(partialuno);  
+      changedFileContent.should.equal(partialcontuno);
+    })
   })
 
   describe('when partialdos changed', function () {
 
     before(function () {
-      changedPartial = null;
-      changedPartialContent = null;
+      reset();
       fileChanged[partialdosFullPath]('change');  
     })
 
     it('triggers partial changed with file and new content', function () {
       changedPartial.name.should.equal(partialdos);  
       changedPartialContent.should.equal(partialcontdos);
+    })
+
+    it('triggers file changed with file and new content', function () {
+      changedFile.name.should.equal(partialdos);  
+      changedFileContent.should.equal(partialcontdos);
     })
   })
 })
