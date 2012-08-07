@@ -81,7 +81,6 @@ describe('compiling and registering', function () {
   before(function () {
     readFiles = [];
     fsStub.readFile = function (p, cb) { 
-      var content;
       if (path.basename(p) === plateuno) { 
         readFiles.push(plateuno);
         cb(null, contuno);
