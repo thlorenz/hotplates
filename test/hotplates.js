@@ -75,14 +75,18 @@ describe('compiling and registering', function () {
         }
       ]
     , error
+    , readFiles
     ;
 
   before(function () {
+    readFiles = [];
     fsStub.readFile = function (p, cb) { 
       var content;
       if (path.basename(p) === plateuno) { 
+        readFiles.push(plateuno);
         cb(null, contuno);
       } else if (path.basename(p) === platedos) {
+        readFiles.push(platedos);
         cb(null, contdos);
       } else {
         cb(new Error('Not setup for this plate ' + p));
@@ -90,79 +94,106 @@ describe('compiling and registering', function () {
     }
 
     hbs = resolve({ rdp: { files: platesFiles } });
+
+    hbStub.compile = function(cont) {
+      if (cont == contuno) return memuno;
+      if(cont == contdos) return memdos;
+      throw new Error('Not setup for this content ' + c);
+    }
+
+    hbStub.registerPartial = function () { throw new Error('no partials should be found and registered'); }
   })
 
 
-  describe('when plates are found in plates path', function () {
-    before(function (done) {
-
-      hbStub.compile = function(cont) {
-        if (cont == contuno) return memuno;
-        if(cont == contdos) return memdos;
-        throw new Error('Not setup for this content ' + c);
-      }
-
-      hbStub.registerPartial = function () { throw new Error('no partials should be found and registered'); }
-
-      hbs.heat({ templates: platesOpts }, function (err) {
-          error = err;
-          done();
-        });
-    })
-
-    it('returns no error', function () {
-      assert.equal(error, null);
-    })
-  
-    it('adds handledbar for each plate under its name', function () {
-      assert.equal(Object.keys(hbs.oven).length, 2);
-      assert.equal(hbs.oven['plateuno'], memuno);
-      assert.equal(hbs.oven['platedos'], memdos);
-    })
-
-    describe('when plates were found in absolute subfolder', function () {
-      var subfolderPlatefiles;
+  describe('when plates are found in plates path and reheat option wasn\'t selected', function () {
       before(function (done) {
-        subfolderPlatefiles = platesFiles.map(function (file) {
-          return { name: file.name, fullPath: file.fullPath, parentDir: '/sub/subsub' };
-        });
-
-
-        hbs = resolve({ rdp: { files: subfolderPlatefiles } });
         hbs.heat({ templates: platesOpts }, function (err) {
             error = err;
             done();
           });
       })
-      
-      it('adds handledbar for each plate under its name at namespace reflecting subfolders', function () {
-        assert.equal(Object.keys(hbs.oven).length, 1);
-        assert.equal(hbs.oven.sub.subsub.plateuno, memuno);
-        assert.equal(hbs.oven.sub.subsub.platedos, memdos);
+
+      it('returns no error', function () {
+        assert.equal(error, null);
       })
-    })
+    
+      it('adds handledbar for each plate under its name', function () {
+        assert.equal(Object.keys(hbs.oven).length, 2);
+        assert.equal(hbs.oven['plateuno'], memuno);
+        assert.equal(hbs.oven['platedos'], memdos);
+      })
 
-    describe('when plates were found in relative subfolder', function () {
-      var subfolderPlatefiles;
-
-      before(function (done) {
-        subfolderPlatefiles = platesFiles.map(function (file) {
-          return { name: file.name, fullPath: file.fullPath, parentDir: 'sub/subsub' };
-        });
-
-        hbs = resolve({ rdp: { files: subfolderPlatefiles } });
-        hbs.heat({ templates: platesOpts }, function (err) {
-            error = err;
-            done();
+      describe('when plates were found in absolute subfolder', function () {
+        var subfolderPlatefiles;
+        before(function (done) {
+          subfolderPlatefiles = platesFiles.map(function (file) {
+            return { name: file.name, fullPath: file.fullPath, parentDir: '/sub/subsub' };
           });
+
+
+          hbs = resolve({ rdp: { files: subfolderPlatefiles } });
+          hbs.heat({ templates: platesOpts }, function (err) {
+              error = err;
+              done();
+            });
+        })
+        
+        it('adds handledbar for each plate under its name at namespace reflecting subfolders', function () {
+          assert.equal(Object.keys(hbs.oven).length, 1);
+          assert.equal(hbs.oven.sub.subsub.plateuno, memuno);
+          assert.equal(hbs.oven.sub.subsub.platedos, memdos);
+        })
       })
-      
-      it('adds handledbar for each plate under its name at namespace reflecting subfolders', function () {
-        assert.equal(Object.keys(hbs.oven).length, 1);
-        assert.equal(hbs.oven.sub.subsub.plateuno, memuno);
-        assert.equal(hbs.oven.sub.subsub.platedos, memdos);
+
+      describe('when plates were found in relative subfolder', function () {
+        var subfolderPlatefiles;
+
+        before(function (done) {
+          subfolderPlatefiles = platesFiles.map(function (file) {
+            return { name: file.name, fullPath: file.fullPath, parentDir: 'sub/subsub' };
+          });
+
+          hbs = resolve({ rdp: { files: subfolderPlatefiles } });
+          hbs.heat({ templates: platesOpts }, function (err) {
+              error = err;
+              done();
+            });
+        })
+        
+        it('adds handledbar for each plate under its name at namespace reflecting subfolders', function () {
+          assert.equal(Object.keys(hbs.oven).length, 1);
+          assert.equal(hbs.oven.sub.subsub.plateuno, memuno);
+          assert.equal(hbs.oven.sub.subsub.platedos, memdos);
+        })
       })
-    })
+
+/* TODO: Watcher
+      describe('plates are found and watch option was selected', function () {
+        var watchCallback
+          , watchedFiles;
+
+        before(function (done) {
+          watchedFiles = [];
+          fsStub.watchFile = function (file, cb) {
+            watchedFiles.push(file);      
+          };
+
+          hbs.heat({ templates:  platesOpts, watch: true }, function (err) {
+              error = err;
+              done();
+            });
+          readFiles = [];
+        })
+
+        it('watches all plates files', function () {
+          assert.equal(watchedFiles[0], platesFiles[0].fullPath);
+          assert.equal(watchedFiles[1], platesFiles[1].fullPath);
+        })
+
+        describe('and plateuno.hbs changes', function () {
+          
+        })
+      })*/
   })
 
   describe('when no plates are found in plates path', function () {

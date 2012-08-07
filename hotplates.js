@@ -5,8 +5,6 @@ var fs            =  require('fs')
   , oven          =  { }
   , templateFiles =  [ ]
   , partialFiles  =  [ ]
-  , watchers      =  { }
-  , isWindows     =  process.platform ===  'win32'
   ;
 
 function folderParts (folder) {
@@ -63,7 +61,6 @@ function process(opts, processFile, done) {
             fs.readFile(file.fullPath, function (err, plate) {
               if (err) done(err);
               else {
-                templateFiles.push(file);
                 processFile(file, plate.toString());
                 if (--tasks === 0) done(null);
               }
@@ -89,55 +86,11 @@ function processPartial(file, partial) {
   handlebars.registerPartial(partialName, partial);
 }
 
-function watch(file, update) {
-  var fullPath = file.fullPath;
-
-  if (watchers[fullPath]) return;
-  
-  watchers[fullPath] = true;
-
-  if (isWindows) {
-    // slower, but oh well
-    fs.watch(fullPath, function (event) {
-      if (event === 'change') update(fullPath);
-    });
-  } else {
-    fs.watchFile(fullPath, { persistent: true, interval: 100 }, function (event) {
-      if (event === 'change') update(file);
-    });
-  }
-}
-
-function keepWarm(file, process) {
-  watch(file, function (file) {
-    fs.readFile(file.fullPath,function (err, plate) {
-      if (err) console.error(err);
-      else process(file, plate);
-    });
-  });
-}
-
-function keepTemplateWarm (file) {
-  keepWarm(file, processTemplate); 
-}
-
-function keepPartialWarm (file) {
-  keepWarm(file, processPartial); 
-}
-
-function watch(opts) {
-  if (!opts.reheat) return;
-
-  // Watch all template files for changes
-  templateFiles.forEach(keepWarm);
-  // Watch all template folders for added/removed files
-}
-
 function heat(opts, hot) {
   function processTemplates (opts, done) {
     process 
       ( opts
-      , function(file, plate) { processTemplate(file, plate); templateFiles.push(file.fullPath); }
+      , function(file, plate) { processTemplate(file, plate); templateFiles.push(file); }
       , done
       );
   }
@@ -145,7 +98,7 @@ function heat(opts, hot) {
   function processPartials (opts, done) {
     process 
       ( opts
-      , function(file, plate) { processPartial(file, plate); partialFiles.push(file.fullPath); }
+      , function(file, plate) { processPartial(file, plate); partialFiles.push(file); }
       , done
       );
   }
@@ -169,6 +122,9 @@ function burn() {
     delete handlebars.partials[key]; 
   });
   templateFiles = [];
+  partialFiles = [];
+
+  return module.exports;
 }
 
 module.exports = {
