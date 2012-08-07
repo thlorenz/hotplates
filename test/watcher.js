@@ -3,10 +3,11 @@
 
 var assert     =  require('assert')
   , proxyquire =  require('proxyquire')
+  , path       =  require('path')
   , fsStub     =  { }
   ;
 
-function resolve (stubOpts) {
+function resolve () {
   return proxyquire.resolve('../watcher', __dirname, { 
       fs :  fsStub
   });
@@ -14,18 +15,20 @@ function resolve (stubOpts) {
 
 describe('when i create a watcher with template and partial files', function () {
   var plateuno           =  'plateuno.hbs'
-    , plateunoFullPath   =  '/path/plateuno.hbs'
     , platedos           =  'platedos.hbs'
+    , plateunoFullPath   =  '/path/plateuno.hbs'
     , platedosFullPath   =  '/path/platedos.hbs'
-    , partialuno         =  'partialuno.hbs'
-    , partialunoFullPath =  '/path/partialuno.hbs'
-    , partialdos         =  'partialdos.hbs'
-    , partialdosFullPath =  '/path/partialdos.hbs'
     , platecontuno       =  'plate cont uno'
     , platecontdos       =  'plate cont dos'
+
+    , partialuno         =  'partialuno.hbs'
+    , partialdos         =  'partialdos.hbs'
+    , partialunoFullPath =  '/path/partialuno.hbs'
+    , partialdosFullPath =  '/path/partialdos.hbs'
     , partialcontuno     =  'partial cont uno'
     , partialcontdos     =  'partial cont dos'
-    , platesFiles        =  [
+
+    , plateFiles        =  [
         { name      :  plateuno
         , fullPath  :  plateunoFullPath
         }
@@ -42,12 +45,19 @@ describe('when i create a watcher with template and partial files', function () 
         }
       ]
     , watchedFiles
+    , fileChanged = { }
+    , changedPlate
+    , changedPlateContent
+    , changedPartial
+    , changedPartialContent
+    , sut
     ;
 
   before(function () {
     watchedFiles = [];
 
-    fsStub.watchFile = function (file, cb) {
+    fsStub.watchFile = function (file, opts, cb) {
+      fileChanged[file] = cb;
       watchedFiles.push(file);      
     };
   
@@ -66,8 +76,86 @@ describe('when i create a watcher with template and partial files', function () 
         cb(new Error('Not setup for this plate ' + p));
       }
     }
+
+    sut = resolve().create(plateFiles, partialFiles);
+
+    sut.on('templateChanged', function (file, content) {
+      changedPlate = file;
+      changedPlateContent = content;
+    });
+
+    sut.on('partialChanged', function (file, content) {
+      changedPartial = file;
+      changedPartialContent = content;
+    });
   })
 
-  
+  it('watches plate files', function () {
+    plateFiles.forEach(function (file) {
+      watchedFiles.should.include(file.fullPath);
+    });
+  })
+
+  it('watches partial files', function () {
+    partialFiles.forEach(function (file) {
+      watchedFiles.should.include(file.fullPath);
+    });
+  })
+
+  describe('when plateuno changed', function () {
+
+    before(function () {
+      changedPlate = null;
+      changedPlateContent = null;
+      fileChanged[plateunoFullPath]('change');  
+    })
+
+    it('triggers template changed with file and new content', function () {
+      changedPlate.name.should.equal(plateuno);  
+      changedPlateContent.should.equal(platecontuno);
+    })
+  })
+
+  describe('when platedos changed', function () {
+
+    before(function () {
+      changedPlate = null;
+      changedPlateContent = null;
+      fileChanged[platedosFullPath]('change');  
+    })
+
+    it('triggers template changed with file and new content', function () {
+      changedPlate.name.should.equal(platedos);  
+      changedPlateContent.should.equal(platecontdos);
+    })
+  })
+
+  describe('when partialuno changed', function () {
+
+    before(function () {
+      changedPartial = null;
+      changedPartialContent = null;
+      fileChanged[partialunoFullPath]('change');  
+    })
+
+    it('triggers partial changed with file and new content', function () {
+      changedPartial.name.should.equal(partialuno);  
+      changedPartialContent.should.equal(partialcontuno);
+    })
+  })
+
+  describe('when partialdos changed', function () {
+
+    before(function () {
+      changedPartial = null;
+      changedPartialContent = null;
+      fileChanged[partialdosFullPath]('change');  
+    })
+
+    it('triggers partial changed with file and new content', function () {
+      changedPartial.name.should.equal(partialdos);  
+      changedPartialContent.should.equal(partialcontdos);
+    })
+  })
 })
 

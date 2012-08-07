@@ -1,5 +1,6 @@
 var fs           =  require('fs')
-  , EventEmitter =  require('events').EventEmitter
+  , events =  require('events')
+  , util         =  require('util')
   , watchers     =  { }
   , isWindows    =  process.platform === 'win32'
   ;
@@ -28,28 +29,34 @@ function Watcher (templateFiles, partialFiles) {
   this.partialFiles = partialFiles;
 }
 
+util.inherits(Watcher, events.EventEmitter);
+
 Watcher.prototype.watchTemplatesAndPartials = function () {
+
+  var self = this;
 
   function keepWarm(file, process) {
     watch(file, function (file) {
-      fs.readFile(file.fullPath,function (err, plate) {
+      fs.readFile(file.fullPath,function (err, content) {
         if (err) cb(err);
-        else process(file, plate);
+        else process(file, content);
       });
     });
   }
 
   function watchTemplates(watchingAll) {
-    this.templateFiles.forEach(function (file) {
-        // TODO: emit
-      keepWarm(file, processTemplate);
+    self.templateFiles.forEach(function (file) {
+      keepWarm(file, function (err, plate) {
+        self.emit('templateChanged', file, plate);
+      });
     });
   }
 
   function watchPartials() {
-    this.partialFiles.forEach(function (file) {
-        // TODO: emit
-      keepWarm(file, processPartial);
+    self.partialFiles.forEach(function (file) {
+      keepWarm(file, function (err, partial) {
+        self.emit('partialChanged', file, partial);
+      });
     });
   }
 
