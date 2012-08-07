@@ -2,6 +2,7 @@ var fs            =  require('fs')
   , path          =  require('path')
   , readdirp      =  require('readdirp')
   , handlebars    =  require('handlebars')
+  , watcher       = require('./watcher')
   , oven          =  { }
   , templateFiles =  [ ]
   , partialFiles  =  [ ]

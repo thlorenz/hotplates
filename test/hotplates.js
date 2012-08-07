@@ -1,16 +1,16 @@
 /*jshint asi:true*/
 /*global describe before beforeEach it */
 
-var assert     =  require('assert')
-  , proxyquire =  require('proxyquire')
-  , handlebars =  require('handlebars')
-  , path       =  require('path')
-  , fsStub     =  { }
-  , hbStub     =  { }
-  , root       =  'some root'
-  , platesPath =  'some path'
+var proxyquire   =  require('proxyquire')
+  , handlebars   =  require('handlebars')
+  , path         =  require('path')
+  , should       =  require('should')
+  , fsStub       =  { }
+  , hbStub       =  { }
+  , root         =  'some root'
+  , platesPath   =  'some path'
+  , readdirpOpts =  []
   , hbs
-  , readdirpOpts = []
   , platesOpts = {
       root            :  'some plates root'
     , directoryFilter :  'some plates directoryFilter'
@@ -40,18 +40,18 @@ describe('when looking for plates and partials', function () {
 
   it('passes correct templates opts to readdirp', function () {
     var templateOpts = readdirpOpts.shift();
-    assert.equal(templateOpts.root            ,  platesOpts.root);
-    assert.equal(templateOpts.directoryFilter ,  platesOpts.directoryFilter);
-    assert.equal(templateOpts.fileFilter[0]   ,  '*.hbs');
-    assert.equal(templateOpts.fileFilter[1]   ,  '*.handlebars');
+    templateOpts.root            .should.equal(platesOpts.root);
+    templateOpts.directoryFilter .should.equal(platesOpts.directoryFilter);
+    templateOpts.fileFilter[0]   .should.equal('*.hbs');
+    templateOpts.fileFilter[1]   .should.equal('*.handlebars');
   })
 
   it('passes correct partials opts to readdirp', function () {
     var partialOpts = readdirpOpts.shift();
-    assert.equal(partialOpts.root            ,  partialsOpts.root);
-    assert.equal(partialOpts.directoryFilter ,  partialsOpts.directoryFilter);
-    assert.equal(partialOpts.fileFilter[0]   ,  '*.hbs');
-    assert.equal(partialOpts.fileFilter[1]   ,  '*.handlebars');
+    partialOpts.root            .should.equal(partialsOpts.root);
+    should.not.exist(partialOpts.directoryFilter);
+    partialOpts.fileFilter[0]   .should.equal('*.hbs');
+    partialOpts.fileFilter[1]   .should.equal('*.handlebars');
   })
 })
 
@@ -103,8 +103,7 @@ describe('compiling and registering', function () {
     hbStub.registerPartial = function () { throw new Error('no partials should be found and registered'); }
   })
 
-
-  describe('when plates are found in plates path and reheat option wasn\'t selected', function () {
+  describe('when plates are found in plates path', function () {
       before(function (done) {
         hbs.heat({ templates: platesOpts }, function (err) {
             error = err;
@@ -113,13 +112,13 @@ describe('compiling and registering', function () {
       })
 
       it('returns no error', function () {
-        assert.equal(error, null);
+        should.not.exist(error);
       })
     
-      it('adds handledbar for each plate under its name', function () {
-        assert.equal(Object.keys(hbs.oven).length, 2);
-        assert.equal(hbs.oven['plateuno'], memuno);
-        assert.equal(hbs.oven['platedos'], memdos);
+      it('adds each plate under its name to the oven', function () {
+        Object.keys(hbs.oven).length.should.equal(2);
+        hbs.oven['plateuno'].should.equal(memuno);
+        hbs.oven['platedos'].should.equal(memdos);
       })
 
       describe('when plates were found in absolute subfolder', function () {
@@ -138,9 +137,9 @@ describe('compiling and registering', function () {
         })
         
         it('adds handledbar for each plate under its name at namespace reflecting subfolders', function () {
-          assert.equal(Object.keys(hbs.oven).length, 1);
-          assert.equal(hbs.oven.sub.subsub.plateuno, memuno);
-          assert.equal(hbs.oven.sub.subsub.platedos, memdos);
+          Object.keys(hbs.oven).length.should.equal(1);
+          hbs.oven.sub.subsub.plateuno.should.equal(memuno);
+          hbs.oven.sub.subsub.platedos.should.equal(memdos);
         })
       })
 
@@ -160,39 +159,11 @@ describe('compiling and registering', function () {
         })
         
         it('adds handledbar for each plate under its name at namespace reflecting subfolders', function () {
-          assert.equal(Object.keys(hbs.oven).length, 1);
-          assert.equal(hbs.oven.sub.subsub.plateuno, memuno);
-          assert.equal(hbs.oven.sub.subsub.platedos, memdos);
+          Object.keys(hbs.oven).length.should.equal(1);
+          hbs.oven.sub.subsub.plateuno.should.equal(memuno);
+          hbs.oven.sub.subsub.platedos.should.equal(memdos);
         })
       })
-
-/* TODO: Watcher
-      describe('plates are found and watch option was selected', function () {
-        var watchCallback
-          , watchedFiles;
-
-        before(function (done) {
-          watchedFiles = [];
-          fsStub.watchFile = function (file, cb) {
-            watchedFiles.push(file);      
-          };
-
-          hbs.heat({ templates:  platesOpts, watch: true }, function (err) {
-              error = err;
-              done();
-            });
-          readFiles = [];
-        })
-
-        it('watches all plates files', function () {
-          assert.equal(watchedFiles[0], platesFiles[0].fullPath);
-          assert.equal(watchedFiles[1], platesFiles[1].fullPath);
-        })
-
-        describe('and plateuno.hbs changes', function () {
-          
-        })
-      })*/
   })
 
   describe('when no plates are found in plates path', function () {
@@ -207,11 +178,11 @@ describe('compiling and registering', function () {
     });
 
     it('returns no error', function () {
-      assert.equal(error, null);
+      should.not.exist(error);
     })
   
     it('adds no handledbar', function () {
-      assert.equal(Object.keys(hbs.oven).length, 0);
+      Object.keys(hbs.oven).length.should.equal(0);
     })
   })
 
@@ -238,12 +209,12 @@ describe('compiling and registering', function () {
     })
 
     it('returns no error', function () {
-      assert.equal(error, null);
+      should.not.exist(error);
     })
 
     it('registers partial for each under its name', function () {
-      assert.equal(memunoName, 'plateuno');
-      assert.equal(memdosName, 'platedos');
+      memunoName.should.equal('plateuno');
+      memdosName.should.equal('platedos');
     })
 
     describe('when partials were found in relative subfolder', function () {
@@ -261,8 +232,8 @@ describe('compiling and registering', function () {
       })
       
     it('registers partial for each under its name reflecting subfolders', function () {
-        assert.equal(memunoName, 'sub.subsub.plateuno');
-        assert.equal(memdosName, 'sub.subsub.platedos');
+        memunoName.should.equal('sub.subsub.plateuno');
+        memdosName.should.equal('sub.subsub.platedos');
       })
     })
   })
