@@ -6,7 +6,7 @@ var fs                 =  require('fs')
   , oven               =  { }
   , templateFiles      =  [ ]
   , partialFiles       =  [ ]
-  , watchedDirectories =  [ ]
+  , watchedDirectories =  { }
   ;
 
 function folderParts (folder) {
@@ -41,6 +41,34 @@ function plateNameFrom(filename) {
 }
 
 function process(opts, watch, processFile, done) {
+
+  function gatherWatchedDirectories (directories) {
+    directories.forEach(function (directory) {
+      if (!watchedDirectories[directory.fullPath])
+        watchedDirectories[directory.fullPath] = directory;
+    });
+  }
+
+  function processHandlebarFiles (handlebarFiles, cb) {
+    var tasks = handlebarFiles.length;
+
+    if (tasks === 0) {
+      done(null);
+      return;
+    }
+    
+    handlebarFiles
+      .forEach(function (file) {
+        fs.readFile(file.fullPath, function (err, plate) {
+          if (err) done(err);
+          else {
+            processFile(file, plate.toString());
+            if (--tasks === 0) cb(null);
+          }
+        });
+      });
+  }
+
   if (!opts) done(null);
   else {
 
@@ -50,38 +78,8 @@ function process(opts, watch, processFile, done) {
 
       if (err) done(err);
       else {
-        var handlebarFiles = entries.files
-          , tasks = handlebarFiles.length;
-
-        if (tasks === 0) {
-          done(null);
-          return;
-        }
-        
-        handlebarFiles
-          .forEach(function (file) {
-            fs.readFile(file.fullPath, function (err, plate) {
-              if (err) done(err);
-              else {
-                processFile(file, plate.toString());
-                if (--tasks === 0) done(null);
-              }
-            });
-          });
-
-        // we only need to gather directories if we need to watch them
-        if (watch) {
-
-          function unwatched (directory) {
-            return watchedDirectories
-              .map(function (d) { return d.fullPath; })
-              .indexOf(directory.fullPath) < 0;
-          }
-
-          entries.directories.forEach(function (directory) {
-              if (unwatched(directory)) watchedDirectories.push(directory);  
-          });
-        }
+        if (watch) gatherWatchedDirectories(entries.directories);
+        processHandlebarFiles(entries.files, done);
       }
     });
   }
@@ -132,7 +130,10 @@ function heat(opts, hot) {
     if (err) hot(err);
     else if (!opts.watch) hot();
     else { 
-      watcher.create(templateFiles, partialFiles, watchedDirectories);
+      var watchedDirectoriesValues = Object.keys(watchedDirectories)
+        .map(function (key) { return watchedDirectories[key]; });
+
+      watcher.create(templateFiles, partialFiles, watchedDirectoriesValues);
       hot();
     }
   }
@@ -150,9 +151,12 @@ function burn() {
   Object.keys(handlebars.partials).forEach(function (key) {
     delete handlebars.partials[key]; 
   });
+  Object.keys(watchedDirectories).forEach(function (key) {
+    delete watchedDirectories[key]; 
+  });
+
   templateFiles = [];
   partialFiles = [];
-  watchedDirectories = [];
 
   return module.exports;
 }

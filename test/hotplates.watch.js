@@ -111,6 +111,22 @@ describe('watching', function () {
     })
   }) 
 
+  describe('watch is off and i heat templates only', function () {
+    before(function (done) {
+      watcherCreateArgs = null;
+      sut = resolve({ rdp: { files: platesFiles, directories: plateDirectories } });
+      sut.heat({ templates : platesOpts }, function (err) {
+        error = err;
+        done();
+      });
+    }) 
+    
+    it('creates no watcher', function () {
+      should.not.exist(watcherCreateArgs);
+    })
+  }) 
+
+
   describe('watch is on and i heat partials only', function () {
     before(function (done) {
       sut = resolve({ rdp: { files: platesFiles, directories: plateDirectories } });
@@ -131,7 +147,7 @@ describe('watching', function () {
       partials[1].name.should.equal(platesFiles[1].name);
     })
 
-    it('creates watcher with unique template folders', function () {
+    it('creates watcher with unique partial folders', function () {
       var directories = watcherCreateArgs['2'];
       directories.should.have.lengthOf(plateDirectories.length - 1); // on duplicate contained
       directories[0].name.should.equal(plateDirectories[0].name);
