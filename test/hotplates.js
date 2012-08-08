@@ -64,7 +64,7 @@ describe('compiling and registering', function () {
     , contdos          =  'contdos'
     , memuno           =  'memuno'
     , memdos           =  'memdos'
-    , platesFiles = [
+    , plateFiles = [
         { name      :  plateuno
         , parentDir :  ''
         , fullPath  :  plateunoFullPath
@@ -76,10 +76,12 @@ describe('compiling and registering', function () {
       ]
     , error
     , readFiles
+    , plateCompileds
     ;
 
   before(function () {
     readFiles = [];
+    plateCompileds = [];
     fsStub.readFile = function (p, cb) { 
       if (path.basename(p) === plateuno) { 
         readFiles.push(plateuno);
@@ -92,19 +94,23 @@ describe('compiling and registering', function () {
       }
     }
 
-    hbs = resolve({ rdp: { files: platesFiles } });
+    hbs = 
+      resolve({ rdp: { files: plateFiles } })
+        .on('templateCompiled', function (plate) {
+          plateCompileds.push(plate);    
+        });
 
     hbStub.compile = function(cont) {
       if (cont == contuno) return memuno;
       if(cont == contdos) return memdos;
       throw new Error('Not setup for this content ' + c);
     }
-
-    hbStub.registerPartial = function () { throw new Error('no partials should be found and registered'); }
   })
 
   describe('when plates are found in plates path', function () {
       before(function (done) {
+        hbStub.registerPartial = function () { throw new Error('no partials should be found and registered'); }
+
         hbs.heat({ templates: platesOpts }, function (err) {
             error = err;
             done();
@@ -121,10 +127,20 @@ describe('compiling and registering', function () {
         hbs.oven['platedos'].should.equal(memdos);
       })
 
+      it('emits "templateCompiled" for each plate', function () {
+        var plateFilesNames = plateFiles.map(function (pf) { return pf.name; })
+          , plateCompiledsNames = plateCompileds.map(function (pc) { return pc.name; });
+
+        plateCompileds.should.have.lengthOf(plateFiles.length);
+        plateFilesNames.forEach(function (name) {
+          plateCompiledsNames.should.include(name);
+        });
+      })
+
       describe('when plates were found in absolute subfolder', function () {
         var subfolderPlatefiles;
         before(function (done) {
-          subfolderPlatefiles = platesFiles.map(function (file) {
+          subfolderPlatefiles = plateFiles.map(function (file) {
             return { name: file.name, fullPath: file.fullPath, parentDir: '/sub/subsub' };
           });
 
@@ -147,7 +163,7 @@ describe('compiling and registering', function () {
         var subfolderPlatefiles;
 
         before(function (done) {
-          subfolderPlatefiles = platesFiles.map(function (file) {
+          subfolderPlatefiles = plateFiles.map(function (file) {
             return { name: file.name, fullPath: file.fullPath, parentDir: 'sub/subsub' };
           });
 
@@ -189,9 +205,11 @@ describe('compiling and registering', function () {
 
   describe('when partials are found in partials path', function () {
     var memunoName
-      , memdosName;
+      , memdosName
+      , partialRegistereds
 
     before(function (done) {
+      partialRegistereds = [];
 
       hbStub.compile = function () { throw new Error('no plates should be found and compiled'); }
 
@@ -201,7 +219,12 @@ describe('compiling and registering', function () {
         else                       throw new Error('Not setup for this content ' + c);
       }
 
-      hbs = resolve({ rdp: { files: platesFiles } });
+      hbs = 
+        resolve({ rdp: { files: plateFiles } })
+          .on('partialRegistered', function (partial) {
+            partialRegistereds.push(partial);  
+          });
+
       hbs.heat({ partials: partialsOpts }, function (err) {
           error = err;
           done();
@@ -216,11 +239,21 @@ describe('compiling and registering', function () {
       memunoName.should.equal('plateuno');
       memdosName.should.equal('platedos');
     })
+    
+    it('emits "partialCompiled" for each partial', function () {
+      var plateFilesNames = plateFiles.map(function (pf) { return pf.name; })
+        , partialRegisteredsNames = partialRegistereds.map(function (pc) { return pc.name; });
+
+      partialRegistereds.should.have.lengthOf(plateFiles.length);
+      plateFilesNames.forEach(function (name) {
+        partialRegisteredsNames.should.include(name);
+      });
+    })
 
     describe('when partials were found in relative subfolder', function () {
       var subfolderPlatefiles;
       before(function (done) {
-        subfolderPlatefiles = platesFiles.map(function (file) {
+        subfolderPlatefiles = plateFiles.map(function (file) {
           return { name: file.name, fullPath: file.fullPath, parentDir: 'sub/subsub' };
         });
 

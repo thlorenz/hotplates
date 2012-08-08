@@ -98,6 +98,7 @@ HotPlates.prototype.processTemplate = function (file, plate) {
     , attachTo = namespace(file.parentDir, this.oven);
 
   attachTo[plateName] = handlebars.compile(plate);
+  this.emit('templateCompiled', file);
 };
 
 HotPlates.prototype.processPartial = function (file, partial) {
@@ -107,6 +108,7 @@ HotPlates.prototype.processPartial = function (file, partial) {
     ;
   
   handlebars.registerPartial(partialName, partial);
+  this.emit('partialRegistered', file);
 };
 
 HotPlates.prototype.heat = function (opts, hot) {
@@ -182,8 +184,8 @@ HotPlates.prototype.burn = function () {
 var hp = new HotPlates();
 
 module.exports = {
-    heat :  function () { hp.heat.apply(hp, arguments); }
-  , burn :  function () { hp.burn.apply(hp, arguments); }
-  , on   :  function () { hp.on.apply(hp, arguments); }
+    heat :  function () { hp.heat.apply(hp, arguments); return this; }
+  , burn :  function () { hp.burn.apply(hp, arguments); return this; }
+  , on   :  function () { hp.on.apply(hp, arguments); return this; }
   , oven :  hp.oven
 };
