@@ -1,14 +1,10 @@
-var fs                 =  require('fs')
-  , path               =  require('path')
-  , util               =  require('util')
-  , events             =  require('events')
-  , readdirp           =  require('readdirp')
-  , handlebars         =  require('handlebars')
-  , watcher            =  require('./watcher')
-  , oven               =  { }
-  , templateFiles      =  [ ]
-  , partialFiles       =  [ ]
-  , watchedDirectories =  { }
+var fs         =  require('fs')
+  , path       =  require('path')
+  , util       =  require('util')
+  , events     =  require('events')
+  , readdirp   =  require('readdirp')
+  , handlebars =  require('handlebars')
+  , watcher    =  require('./watcher')
   ;
 
 function folderParts (folder) {
@@ -24,10 +20,10 @@ function folderParts (folder) {
     return prefRemoved.split('/');
 }
 
-function namespace(folder) {
+function namespace(folder, root) {
 
     var parts = folderParts(folder)
-      , parent = oven;
+      , parent = root;
 
     for (var i = 0; i < parts.length; i++) {
         if (typeof parent[ parts[i] ] == 'undefined') {
@@ -42,12 +38,22 @@ function plateNameFrom(filename) {
   return filename.substr(0, filename.length - path.extname(filename).length);
 }
 
-function process(opts, watch, processFile, done) {
+function HotPlates () {
+  this.oven               =  { };
+  this.templateFiles      =  [ ];
+  this.partialFiles       =  [ ];
+  this.watchedDirectories =  { };
+}
+
+util.inherits(HotPlates, events.EventEmitter);
+
+HotPlates.prototype.process = function (opts, watch, processFile, done) {
+  var self = this;
 
   function gatherWatchedDirectories (directories) {
     directories.forEach(function (directory) {
-      if (!watchedDirectories[directory.fullPath])
-        watchedDirectories[directory.fullPath] = directory;
+      if (!self.watchedDirectories[directory.fullPath])
+        self.watchedDirectories[directory.fullPath] = directory;
     });
   }
 
@@ -85,16 +91,11 @@ function process(opts, watch, processFile, done) {
       }
     });
   }
-} 
-
-function HotPlates () {
-}
-
-util.inherits(HotPlates, events.EventEmitter);
+};
 
 HotPlates.prototype.processTemplate = function (file, plate) {
   var plateName = plateNameFrom(file.name)
-    , attachTo = namespace(file.parentDir);
+    , attachTo = namespace(file.parentDir, this.oven);
 
   attachTo[plateName] = handlebars.compile(plate);
 };
@@ -113,19 +114,19 @@ HotPlates.prototype.heat = function (opts, hot) {
     , self = this;
 
   function processTemplates (opts, done) {
-    process 
+    self.process 
       ( opts
       , watch
-      , function(file, plate) { self.processTemplate(file, plate); templateFiles.push(file); }
+      , function(file, plate) { self.processTemplate(file, plate); self.templateFiles.push(file); }
       , done
       );
   }
 
   function processPartials (opts, done) {
-    process 
+    self.process 
       ( opts
       , watch
-      , function(file, plate) { self.processPartial(file, plate); partialFiles.push(file); }
+      , function(file, plate) { self.processPartial(file, plate); self.partialFiles.push(file); }
       , done
       );
   }
@@ -139,14 +140,14 @@ HotPlates.prototype.heat = function (opts, hot) {
     if (err) hot(err);
     else if (!opts.watch) hot();
     else { 
-      var watchedDirectoriesValues = Object.keys(watchedDirectories)
-        .map(function (key) { return watchedDirectories[key]; });
+      var watchedDirectoriesValues = Object.keys(self.watchedDirectories)
+        .map(function (key) { return self.watchedDirectories[key]; });
 
       watcher
-        .create(templateFiles, partialFiles, watchedDirectoriesValues)
-        .on('templateChanged', self.processTemplate)
-        .on('partialChanged',  self.processPartial)
-        .on('directoryChanged', function reheatAll() { self.heat(opts, function () { } ); })
+        .create(self.templateFiles, self.partialFiles, watchedDirectoriesValues)
+        .on('templateChanged',  function (file, plate)  { self.processTemplate(file, plate); })
+        .on('partialChanged',   function (file, plate)  { self.processPartial(file, plate); })
+        .on('directoryChanged', function reheatAll()    { self.heat(opts, function () { } ); })
         ;
       
       hot();
@@ -160,19 +161,20 @@ HotPlates.prototype.heat = function (opts, hot) {
 };
 
 HotPlates.prototype.burn = function () {
-  Object.keys(oven).forEach(function (key) {
-    delete oven[key];
+  var self = this;
+
+  Object.keys(self.oven).forEach(function (key) {
+    delete self.oven[key];
   });
   Object.keys(handlebars.partials).forEach(function (key) {
     delete handlebars.partials[key]; 
   });
-  Object.keys(watchedDirectories).forEach(function (key) {
-    delete watchedDirectories[key]; 
+  Object.keys(self.watchedDirectories).forEach(function (key) {
+    delete self.watchedDirectories[key]; 
   });
 
-  templateFiles = [];
-  partialFiles = [];
-  createdWatcher = null;
+  self.templateFiles = [];
+  self.partialFiles = [];
 
   return module.exports;
 };
@@ -183,5 +185,5 @@ module.exports = {
     heat :  function () { hp.heat.apply(hp, arguments); }
   , burn :  function () { hp.burn.apply(hp, arguments); }
   , on   :  function () { hp.on.apply(hp, arguments); }
-  , oven :  oven
+  , oven :  hp.oven
 };
