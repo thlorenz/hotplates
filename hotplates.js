@@ -1,5 +1,7 @@
 var fs                 =  require('fs')
   , path               =  require('path')
+  , util               =  require('util')
+  , events             =  require('events')
   , readdirp           =  require('readdirp')
   , handlebars         =  require('handlebars')
   , watcher            =  require('./watcher')
@@ -84,30 +86,37 @@ function process(opts, watch, processFile, done) {
     });
   }
 } 
-function processTemplate(file, plate) {
+
+function HotPlates () {
+}
+
+util.inherits(HotPlates, events.EventEmitter);
+
+HotPlates.prototype.processTemplate = function (file, plate) {
   var plateName = plateNameFrom(file.name)
     , attachTo = namespace(file.parentDir);
 
   attachTo[plateName] = handlebars.compile(plate);
-}
+};
 
-function processPartial(file, partial) {
+HotPlates.prototype.processPartial = function (file, partial) {
   var plateName   =  plateNameFrom(file.name)
     , namespaces  =  folderParts(file.parentDir)
     , partialName =  namespaces.length === 0 ? plateName : namespaces.concat(plateName).join('.')
     ;
   
   handlebars.registerPartial(partialName, partial);
-}
+};
 
-function heat(opts, hot) {
-  var watch = opts.watch;
+HotPlates.prototype.heat = function (opts, hot) {
+  var watch = opts.watch
+    , self = this;
 
   function processTemplates (opts, done) {
     process 
       ( opts
       , watch
-      , function(file, plate) { processTemplate(file, plate); templateFiles.push(file); }
+      , function(file, plate) { self.processTemplate(file, plate); templateFiles.push(file); }
       , done
       );
   }
@@ -116,7 +125,7 @@ function heat(opts, hot) {
     process 
       ( opts
       , watch
-      , function(file, plate) { processPartial(file, plate); partialFiles.push(file); }
+      , function(file, plate) { self.processPartial(file, plate); partialFiles.push(file); }
       , done
       );
   }
@@ -135,9 +144,9 @@ function heat(opts, hot) {
 
       watcher
         .create(templateFiles, partialFiles, watchedDirectoriesValues)
-        .on('templateChanged', processTemplate)
-        .on('partialChanged',  processPartial)
-        .on('directoryChanged', function reheatAll() { heat(opts, function () { } ); })
+        .on('templateChanged', self.processTemplate)
+        .on('partialChanged',  self.processPartial)
+        .on('directoryChanged', function reheatAll() { self.heat(opts, function () { } ); })
         ;
       
       hot();
@@ -148,9 +157,9 @@ function heat(opts, hot) {
     throw new Error('Need to either define "templates" or "partials" options.');
 
   processTemplates(opts.templates, thenProcessPartials);
-}
+};
 
-function burn() {
+HotPlates.prototype.burn = function () {
   Object.keys(oven).forEach(function (key) {
     delete oven[key];
   });
@@ -166,10 +175,13 @@ function burn() {
   createdWatcher = null;
 
   return module.exports;
-}
+};
+
+var hp = new HotPlates();
 
 module.exports = {
-    heat :  heat
-  , burn :  burn
+    heat :  function () { hp.heat.apply(hp, arguments); }
+  , burn :  function () { hp.burn.apply(hp, arguments); }
+  , on   :  function () { hp.on.apply(hp, arguments); }
   , oven :  oven
 };
