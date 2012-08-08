@@ -150,14 +150,6 @@ In order to remove all templates from the oven and unregister all partials, you 
 
 This is useful in cases where you want to make sure that no obsolete templates or partials are sticking around.
 
-## Reheat
-
-Automatic reheating of templates and partials.
-
-Useful especially while developing, to immediately update site with edited templates.
-
-On its way - watch that space!
-
 # Tests
 
 Reading the [tests](https://github.com/thlorenz/hotplates/blob/master/test/hotplates.js) 
