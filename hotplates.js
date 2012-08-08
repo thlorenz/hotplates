@@ -133,7 +133,12 @@ function heat(opts, hot) {
       var watchedDirectoriesValues = Object.keys(watchedDirectories)
         .map(function (key) { return watchedDirectories[key]; });
 
-      watcher.create(templateFiles, partialFiles, watchedDirectoriesValues);
+      watcher
+        .create(templateFiles, partialFiles, watchedDirectoriesValues)
+        .on('templateChanged', processTemplate)
+        .on('partialChanged',  processPartial)
+        ;
+      
       hot();
     }
   }
@@ -157,6 +162,7 @@ function burn() {
 
   templateFiles = [];
   partialFiles = [];
+  createdWatcher = null;
 
   return module.exports;
 }

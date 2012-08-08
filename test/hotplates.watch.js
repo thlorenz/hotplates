@@ -1,13 +1,14 @@
 /*jshint asi:true*/
 /*global describe before beforeEach it */
 
-var proxyquire   =  require('proxyquire')
-  , handlebars   =  require('handlebars')
-  , path         =  require('path')
-  , should       =  require('should')
-  , fsStub       =  { }
-  , hbStub       =  { }
-  , watcherStub  =  { }
+var proxyquire  =  require('proxyquire')
+  , handlebars  =  require('handlebars')
+  , path        =  require('path')
+  , should      =  require('should')
+  , events      =  require('events')
+  , fsStub      =  { }
+  , hbStub      =  { }
+  , watcherStub =  new events.EventEmitter()
   , platesOpts = {
       root            :  'some plates root'
     , directoryFilter :  'some plates directoryFilter'
@@ -80,7 +81,11 @@ describe('watching', function () {
     hbStub.registerPartial = function (name, content) { 
       registeredPartials.push({ name: name, content: content });  
     }
-    watcherStub.create = function () { watcherCreateArgs = arguments; }
+
+    watcherStub.create = function () { 
+      watcherCreateArgs = arguments; 
+      return watcherStub;
+    }
   }) 
 
   describe('watch is on and i heat templates only', function () {
@@ -108,6 +113,18 @@ describe('watching', function () {
       directories.should.have.lengthOf(plateDirectories.length - 1); // on duplicate contained
       directories[0].name.should.equal(plateDirectories[0].name);
       directories[1].name.should.equal(plateDirectories[1].name);
+    })
+
+    describe('and watcher says that plateuno template changed', function () {
+      var newContent = 'new content';
+      before(function () {
+        watcherStub.emit('templateChanged', platesFiles[0], newContent);
+      })
+
+      it('recompiles plate uno with new content', function () {
+        var lastCompiled = compiledTemplates.pop();
+        lastCompiled.should.equal(newContent);
+      })
     })
   }) 
 
@@ -152,6 +169,19 @@ describe('watching', function () {
       directories.should.have.lengthOf(plateDirectories.length - 1); // on duplicate contained
       directories[0].name.should.equal(plateDirectories[0].name);
       directories[1].name.should.equal(plateDirectories[1].name);
+    })
+
+    describe('and watcher says that plateuno partial changed', function () {
+      var newContent = 'new content';
+      before(function () {
+        watcherStub.emit('partialChanged', platesFiles[0], newContent);
+      })
+
+      it('re-registers plateuno with new content', function () {
+        var lastRegistered = registeredPartials.pop();
+        lastRegistered.name.should.equal('plateuno');
+        lastRegistered.content.should.equal(newContent);
+      })
     })
   }) 
 })
