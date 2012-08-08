@@ -139,8 +139,7 @@ Partials are registered in a similar fashion, but not shoved into the oven as th
 
 However the namespacing schema for them is exactly the same.
 
-Assuming the partial root was 'templates/partials', a partial found at 'templates/partials/book/page.hbs' 
-will be accessible in other templates and partials under the name `book.page`.
+Assuming the partial root was 'templates/partials', a partial found at 'templates/partials/book/page.hbs' will be accessible in other templates and partials under the name `book.page`.
 
 ## Burning templates
 
@@ -149,6 +148,14 @@ will be accessible in other templates and partials under the name `book.page`.
 In order to remove all templates from the oven and unregister all partials, you can burn them.
 
 This is useful in cases where you want to make sure that no obsolete templates or partials are sticking around.
+
+## Events
+
+***on('templateCompiled', function (fileInfo) { })*** and ***on('partialRegistered', function (fileInfo) { })***
+
+**fileInfo**: supplied by [readdirp](https://github.com/thlorenz/readdirp) and thus has the same structure as explained in the [readdirp documentation](https://github.com/thlorenz/readdirp#entry-info).
+
+These events are emitted when a template was [re]compiled or a partial [re]registered respectively.
 
 # Tests
 
