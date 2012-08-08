@@ -126,6 +126,17 @@ describe('watching', function () {
         lastCompiled.should.equal(newContent);
       })
     })
+
+    describe('and watcher says that a directory changed', function () {
+      before(function () {
+        compiledTemplates = [];
+        watcherStub.emit('directoryChanged', { name: 'some directory' });
+      })
+
+      it('recompiles all templates', function () {
+        compiledTemplates.should.have.lengthOf(2);
+      })
+    })
   }) 
 
   describe('watch is off and i heat templates only', function () {
@@ -181,6 +192,17 @@ describe('watching', function () {
         var lastRegistered = registeredPartials.pop();
         lastRegistered.name.should.equal('plateuno');
         lastRegistered.content.should.equal(newContent);
+      })
+    })
+
+    describe('and watcher says that a directory changed', function () {
+      before(function () {
+        registeredPartials = [];
+        watcherStub.emit('directoryChanged', { name: 'some directory' });
+      })
+
+      it('re-registers all partials', function () {
+        registeredPartials.should.have.lengthOf(2);
       })
     })
   }) 

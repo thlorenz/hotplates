@@ -137,6 +137,7 @@ function heat(opts, hot) {
         .create(templateFiles, partialFiles, watchedDirectoriesValues)
         .on('templateChanged', processTemplate)
         .on('partialChanged',  processPartial)
+        .on('directoryChanged', function reheatAll() { heat(opts, function () { } ); })
         ;
       
       hot();
