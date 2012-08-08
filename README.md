@@ -113,8 +113,12 @@ Typical opts:
   }
 , partials:
   { root: path.join(__dirname, 'templates', 'partials') } // register all my partials
+, watch: true // autmatically re-compile and re-register my templates when I change them or add new ones
 }
 ```
+
+**watch**: when set to true, hotplates will watch the templates and partial folders for changes and recompile templates, 
+re-register partials when they change and add new ones that are created
 
 Additional options can be given to `templates` and `partials`, most commonly you could change the fileFilter which defaults to `['*.hbs', '*.handlebars']`.
 
