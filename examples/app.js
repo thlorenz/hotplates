@@ -5,7 +5,10 @@ var hotplates  =  require('../hotplates')
   , exec       =  require('child_process').exec
   ;
 
-hotplates.heat(
+hotplates
+  .on('templateCompiled', function (fileInfo) { console.log('Compiled: \t', fileInfo.path); })
+  .on('partialRegistered', function (fileInfo) { console.log('Registered:\t', fileInfo.path); })
+  .heat(
     { templates:
       { root: path.join(__dirname, 'templates')
       , directoryFilter: '!partials' 
@@ -38,9 +41,6 @@ function renderSite(err) {
         }
     };
 
-
-    console.log(handlebars.partials);
-    return;
   var rendered = hotplates.oven.index(ctx);
   fs.writeFileSync('./index.html', rendered);
 

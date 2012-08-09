@@ -1,8 +1,9 @@
 var fs        =  require('fs')
   , events    =  require('events')
   , util      =  require('util')
+  , minDuration = 1000
+  , lastChange 
   , watchers  =  { }
-  , isWindows =  process.platform ===  'win32'
   ;
 
 function watch(file, eventName, update) {
@@ -12,17 +13,16 @@ function watch(file, eventName, update) {
   
   watchers[fullPath] = true;
 
-  if (isWindows) {
-    // slower, but oh well
-    fs.watch(fullPath, function (event) {
-      console.log('%s === %s', event, eventName);
-      if (event === eventName) update(fullPath);
-    });
-  } else {
-    fs.watchFile(fullPath, { persistent: true, interval: 100 }, function (event) {
-      if (event === eventName) update(file);
-    });
-  }
+  fs.watch(fullPath, { persistent: true }, function (event) {
+    if (event !== eventName) return;
+
+    // Avoid duplicate fires in cases when two change events are raised for one actual change
+    var now = new Date();
+    if (!lastChange || now - lastChange > minDuration) {
+      update(file);
+      lastChange = now;
+    }
+  });
 }
 
 function Watcher (templateFiles, partialFiles, templateDirectories) {
@@ -41,7 +41,7 @@ Watcher.prototype.watchTemplatesAndPartials = function () {
     watch(file, 'change', function (file) {
       fs.readFile(file.fullPath,function (err, content) {
         if (err) cb(err);
-        else process(file, content);
+        else process(file, content.toString());
       });
     });
   }

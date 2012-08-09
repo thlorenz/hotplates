@@ -3,6 +3,7 @@
 
 var assert     =  require('assert')
   , proxyquire =  require('proxyquire')
+  , should     =  require('should')
   , path       =  require('path')
   , fsStub     =  { }
   ;
@@ -67,7 +68,7 @@ describe('when i create a watcher with template and partial files', function () 
   before(function () {
     watchedFiles = [];
 
-    fsStub.watchFile = function (file, opts, cb) {
+    fsStub.watch = function (file, opts, cb) {
       fileChanged[file] = cb;
       watchedFiles.push(file);      
     };
@@ -202,7 +203,7 @@ describe('when i create a watcher with template directories', function () {
     ;
 
   before(function () {
-    fsStub.watchFile = function (directory, opts, cb) {
+    fsStub.watch = function (directory, opts, cb) {
       changeIn[directory] = cb;
       watchedDirectories.push(directory);
     };
