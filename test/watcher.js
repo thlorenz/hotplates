@@ -9,9 +9,12 @@ var assert     =  require('assert')
   ;
 
 function resolve () {
-  return proxyquire.resolve('../watcher', __dirname, { 
-      fs :  fsStub
-  });
+  return proxyquire
+    .resolve('../watcher', __dirname, { 
+        fs :  fsStub
+    })
+    ._overrideMinDuration(0)
+    ;
 }
 
 describe('when i create a watcher with template and partial files', function () {

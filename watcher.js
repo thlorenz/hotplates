@@ -78,10 +78,12 @@ Watcher.prototype.watchTemplatesAndPartials = function () {
 };
 
 module.exports = {
-  create: function (templateFiles, partialFiles, templateDirectories) {
-    var watcher = new Watcher(templateFiles, partialFiles, templateDirectories);
-    watcher.watchTemplatesAndPartials();
-    return watcher;
-  }
+    create: function (templateFiles, partialFiles, templateDirectories) {
+      var watcher = new Watcher(templateFiles, partialFiles, templateDirectories);
+      watcher.watchTemplatesAndPartials();
+      return watcher;
+    }
+    // used for easy testing
+  , _overrideMinDuration: function (value) { minDuration = value; return this; }
 };
 
