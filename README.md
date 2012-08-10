@@ -15,15 +15,9 @@ Assuming your handlebars templates folder looks as follows:
         │   ├── filter
         │   │   ├── collector hbs
         │   │   └── handle hbs
-        │   ├── index hbs
-        │   ├── rack
-        │   │   └── grille hbs
-        │   └── top
-        │       ├── burners hbs
-        │       └── dials hbs
+        │   └── parts-index hbs
         └── site
             ├── content hbs
-            ├── footer hbs
             └── header hbs
  
 
@@ -45,14 +39,10 @@ This compiles *index.hbs*, makes it accessible via `hotplates.oven.index` and
 registers the following partials with handlebars:
 
     site.content          
-    site.footer           
     site.header           
-    oven.index            
+    oven.partsIndex            
     oven.filter.collector 
     oven.filter.handle    
-    oven.rack.grille      
-    oven.top.burners      
-    oven.top.dials        
 
 They are now accessible under that name in other templates and partials.
 
@@ -116,14 +106,22 @@ Typical opts:
 , watch: true // autmatically re-compile and re-register my templates when I change them or add new ones
 }
 ```
+### watch 
 
-**watch**: when set to true, hotplates will watch the templates and partial folders for changes and recompile templates, 
+When set to true, hotplates will watch the templates and partial folders for changes and recompile templates, 
 re-register partials when they change and add new ones that are created
 
 Additional options can be given to `templates` and `partials`, most commonly you could change the fileFilter which defaults to `['*.hbs', '*.handlebars']`.
 
 Since hotplates resolves templates and partials using [readdirp](https://github.com/thlorenz/readdirp),
 refer to its [options documentation](https://github.com/thlorenz/readdirp#options).
+
+### Naming Conventions 
+
+Templates with names and paths containing underscores or dashes will be [camelCased](http://en.wikipedia.org/wiki/CamelCase).
+
+E.g., 'dashed-path/underscored_name.hbs' is compiled/registered as 'dashedPath/underscoredName'
+
 
 ## The oven
 
@@ -151,11 +149,26 @@ This is useful in cases where you want to make sure that no obsolete templates o
 
 ## Events
 
-***on('templateCompiled', function (fileInfo) { })*** and ***on('partialRegistered', function (fileInfo) { })***
+***on('templateCompiled', function (fileInfo, name) { })*** and ***on('partialRegistered', function (fileInfo, name) { })***
 
 **fileInfo**: supplied by [readdirp](https://github.com/thlorenz/readdirp) and thus has the same structure as explained in the [readdirp documentation](https://github.com/thlorenz/readdirp#entry-info).
+**name**: the full name under which the template was added to the oven or registered
 
 These events are emitted when a template was [re]compiled or a partial [re]registered respectively.
+
+This feature can be very useful for logging, etc.,
+
+**Example:**
+
+*from [examples/server.js](https://github.com/thlorenz/hotplates/blob/master/examples/server.js)*
+
+```javascript
+hotplates
+  .on('templateCompiled', function (fileInfo, name) { console.log('Compiled: \t[ %s ] as [ %s ]', fileInfo.path, name); })
+  .on('partialRegistered', function (fileInfo, name) { console.log('Registered:\t[ %s ] as [ %s ]', fileInfo.path, name); })
+  .heat({ ... }, serveSite );
+```
+
 
 # Tests
 
