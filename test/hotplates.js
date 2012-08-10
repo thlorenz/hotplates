@@ -81,7 +81,6 @@ describe('compiling and registering', function () {
 
   before(function () {
     readFiles = [];
-    plateCompileds = [];
     fsStub.readFile = function (p, cb) { 
       if (path.basename(p) === plateuno) { 
         readFiles.push(plateuno);
@@ -94,11 +93,7 @@ describe('compiling and registering', function () {
       }
     }
 
-    hbs = 
-      resolve({ rdp: { files: plateFiles } })
-        .on('templateCompiled', function (plate) {
-          plateCompileds.push(plate);    
-        });
+    hbs = resolve({ rdp: { files: plateFiles } });
 
     hbStub.compile = function(cont) {
       if (cont == contuno) return memuno;
@@ -109,11 +104,17 @@ describe('compiling and registering', function () {
 
   describe('when plates are found in plates path', function () {
       before(function (done) {
+        plateCompileds = [];
+        
         hbStub.registerPartial = function () { throw new Error('no partials should be found and registered'); }
 
-        hbs.heat({ templates: platesOpts }, function (err) {
-            error = err;
-            done();
+        hbs
+          .on('templateCompiled', function (file, name) {
+            plateCompileds.push({ file: file, name: name });  
+          })
+          .heat({ templates: platesOpts }, function (err) {
+              error = err;
+              done();
           });
       })
 
@@ -129,11 +130,11 @@ describe('compiling and registering', function () {
 
       it('emits "templateCompiled" for each plate', function () {
         var plateFilesNames = plateFiles.map(function (pf) { return pf.name; })
-          , plateCompiledsNames = plateCompileds.map(function (pc) { return pc.name; });
+          , plateCompiledsFileNames = plateCompileds.map(function (pc) { return pc.file.name; });
 
         plateCompileds.should.have.lengthOf(plateFiles.length);
         plateFilesNames.forEach(function (name) {
-          plateCompiledsNames.should.include(name);
+          plateCompiledsFileNames.should.include(name);
         });
       })
 
@@ -163,14 +164,20 @@ describe('compiling and registering', function () {
         var subfolderPlatefiles;
 
         before(function (done) {
+          plateCompileds = [];
+
           subfolderPlatefiles = plateFiles.map(function (file) {
             return { name: file.name, fullPath: file.fullPath, parentDir: 'sub/subsub' };
           });
 
           hbs = resolve({ rdp: { files: subfolderPlatefiles } });
-          hbs.heat({ templates: platesOpts }, function (err) {
-              error = err;
-              done();
+          hbs
+            .on('templateCompiled', function (file, name) {
+              plateCompileds.push({ file: file, name: name });  
+            })
+            .heat({ templates: subfolderPlatefiles }, function (err) {
+                error = err;
+                done();
             });
         })
         
@@ -179,6 +186,21 @@ describe('compiling and registering', function () {
           hbs.oven.sub.subsub.plateuno.should.equal(memuno);
           hbs.oven.sub.subsub.platedos.should.equal(memdos);
         })
+
+        it('emits "templateCompiled" for each template including namespaced name', function () {
+          var plateFilesNames = plateFiles.map(function (pf) { return pf.name; })
+            , plateCompiledsFileNames = plateCompileds.map(function (pc) { return pc.file.name; })
+            , plateCompiledsNames = plateCompileds.map(function (pc) { return pc.name; });
+
+          plateCompileds.should.have.lengthOf(plateFiles.length);
+          plateFilesNames.forEach(function (name) {
+            plateCompiledsFileNames.should.include(name);
+          });
+
+          plateCompiledsNames.should.include('sub.subsub.plateuno');
+          plateCompiledsNames.should.include('sub.subsub.platedos');
+        })
+
       })
   })
 
@@ -221,8 +243,8 @@ describe('compiling and registering', function () {
 
       hbs = 
         resolve({ rdp: { files: plateFiles } })
-          .on('partialRegistered', function (partial) {
-            partialRegistereds.push(partial);  
+          .on('partialRegistered', function (file, name) {
+            partialRegistereds.push({ file: file, name: name });  
           });
 
       hbs.heat({ partials: partialsOpts }, function (err) {
@@ -240,34 +262,55 @@ describe('compiling and registering', function () {
       memdosName.should.equal('platedos');
     })
     
-    it('emits "partialCompiled" for each partial', function () {
+    it('emits "partialCompiled" for each partial including namespaced name', function () {
       var plateFilesNames = plateFiles.map(function (pf) { return pf.name; })
-        , partialRegisteredsNames = partialRegistereds.map(function (pc) { return pc.name; });
+        , partialRegisteredsFileNames = partialRegistereds.map(function (pc) { return pc.file.name; });
 
       partialRegistereds.should.have.lengthOf(plateFiles.length);
       plateFilesNames.forEach(function (name) {
-        partialRegisteredsNames.should.include(name);
+        partialRegisteredsFileNames.should.include(name);
       });
     })
 
     describe('when partials were found in relative subfolder', function () {
       var subfolderPlatefiles;
       before(function (done) {
+        partialRegistereds = [];
+
         subfolderPlatefiles = plateFiles.map(function (file) {
           return { name: file.name, fullPath: file.fullPath, parentDir: 'sub/subsub' };
         });
 
         hbs = resolve({ rdp: { files: subfolderPlatefiles } });
-        hbs.heat({ partials: partialsOpts }, function (err) {
+        hbs
+          .on('partialRegistered', function (file, name) {
+            partialRegistereds.push({ file: file, name: name });  
+          })
+          .heat({ partials: partialsOpts }, function (err) {
             error = err;
             done();
           });
       })
       
-    it('registers partial for each under its name reflecting subfolders', function () {
-        memunoName.should.equal('sub.subsub.plateuno');
-        memdosName.should.equal('sub.subsub.platedos');
+      it('registers partial for each under its name reflecting subfolders', function () {
+          memunoName.should.equal('sub.subsub.plateuno');
+          memdosName.should.equal('sub.subsub.platedos');
       })
+
+      it('emits "partialRegistered" for each partial including namespaced name', function () {
+        var plateFilesNames = subfolderPlatefiles.map(function (pf) { return pf.name; })
+          , partialRegisteredsFileNames = partialRegistereds.map(function (pc) { return pc.file.name; })
+          , partialRegisteredsNames = partialRegistereds.map(function (pc) { return pc.name; });
+          
+        partialRegistereds.should.have.lengthOf(subfolderPlatefiles.length);
+        plateFilesNames.forEach(function (name) {
+          partialRegisteredsFileNames.should.include(name);
+        });
+
+        partialRegisteredsNames.should.include('sub.subsub.plateuno');
+        partialRegisteredsNames.should.include('sub.subsub.platedos');
+      })
+
     })
   })
 })

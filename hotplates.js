@@ -31,7 +31,7 @@ function namespace(folder, root) {
         }
         parent = parent[ parts[i] ];
     }
-    return parent;
+    return { root: parent, path: parts.join('.') };
 }
 
 function plateNameFrom(filename) {
@@ -94,11 +94,12 @@ HotPlates.prototype.process = function (opts, watch, processFile, done) {
 };
 
 HotPlates.prototype.processTemplate = function (file, plate) {
-  var plateName = plateNameFrom(file.name)
-    , attachTo = namespace(file.parentDir, this.oven);
+  var plateName           =  plateNameFrom(file.name)
+    , namespaced          =  namespace(file.parentDir, this.oven)
+    , namespacedPlateName =  namespaced.path + '.' + plateName;
 
-  attachTo[plateName] = handlebars.compile(plate);
-  this.emit('templateCompiled', file);
+  namespaced.root[plateName] = handlebars.compile(plate);
+  this.emit('templateCompiled', file, namespacedPlateName);
 };
 
 HotPlates.prototype.processPartial = function (file, partial) {
@@ -108,7 +109,7 @@ HotPlates.prototype.processPartial = function (file, partial) {
     ;
   
   handlebars.registerPartial(partialName, partial);
-  this.emit('partialRegistered', file);
+  this.emit('partialRegistered', file, partialName);
 };
 
 HotPlates.prototype.heat = function (opts, hot) {

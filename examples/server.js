@@ -41,8 +41,8 @@ function serveSite () {
 }
 
 hotplates
-  .on('templateCompiled', function (fileInfo) { console.log('Compiled: \t', fileInfo.path); })
-  .on('partialRegistered', function (fileInfo) { console.log('Registered:\t', fileInfo.path); })
+  .on('templateCompiled', function (fileInfo, name) { console.log('Compiled: \t[ %s ] as [ %s ]', fileInfo.path, name); })
+  .on('partialRegistered', function (fileInfo, name) { console.log('Registered:\t[ %s ] as [ %s ]', fileInfo.path, name); })
   .heat(
     { templates:
       { root: path.join(__dirname, 'templates')
