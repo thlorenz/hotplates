@@ -98,7 +98,7 @@ describe('compiling and registering', function () {
     hbStub.compile = function(cont) {
       if (cont == contuno) return memuno;
       if(cont == contdos) return memdos;
-      throw new Error('Not setup for this content ' + c);
+      throw new Error('Not setup for this content ' + cont);
     }
   })
 
@@ -202,6 +202,44 @@ describe('compiling and registering', function () {
         })
 
       })
+
+      describe('when plates "dashed-folder/name-with-dashes.hbs" and "underscored_folder/name_with__underscores" are found', function () {
+        var specialPlateFiles = [
+              { name      :  'name-with-dashes.hbs'
+              , parentDir :  'dashed-folder'
+              , fullPath  :  'does/not/matter/here'
+              }
+            , { name      :  'name_with__underscores.hbs'
+              , parentDir :  'underscored_folder'
+              , fullPath  :  'does/not/matter/here'
+              }
+            ]
+          , localhbs;
+
+        before(function (done) {
+
+          localhbs = proxyquire
+            .resolve('../hotplates', __dirname, { 
+                fs         :  { readFile:  function (p, cb) { cb(null, 'not important here'); } }
+              , handlebars :  { compile: function () { return 'not needed'; } }
+              , readdirp   :  function (opts, cb) {
+                  readdirpOpts.push(opts);
+                  cb(null, { files: specialPlateFiles }); 
+                }
+            })
+            .heat({ templates: specialPlateFiles }, function (err) {
+              done();
+            });
+        })
+        
+        it('adds plate "dashedFolder.nameWithDashes to oven', function () {
+          should.exist(localhbs.oven.dashedFolder.nameWithDashes);
+        })
+
+        it('adds plate "underscoredFolder.nameWithUnderscores to oven', function () {
+          should.exist(localhbs.oven.underscoredFolder.nameWithUnderscores);
+        })
+      })
   })
 
   describe('when no plates are found in plates path', function () {
@@ -238,7 +276,7 @@ describe('compiling and registering', function () {
       hbStub.registerPartial = function(name, cont) {
              if (cont === contuno) memunoName = name;
         else if (cont === contdos) memdosName = name;
-        else                       throw new Error('Not setup for this content ' + c);
+        else                       throw new Error('Not setup for this content ' + cont);
       }
 
       hbs = 

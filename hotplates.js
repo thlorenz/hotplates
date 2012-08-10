@@ -7,6 +7,12 @@ var fs         =  require('fs')
   , watcher    =  require('./watcher')
   ;
 
+function camelCase (name) {
+  return name
+    .replace(/([\-_][a-z])/g, function( $1 ){ return $1.toUpperCase(); }) // uppercase all letters after - and _
+    .replace(/[\-_]/g,''); // remove all - and _
+}
+
 function folderParts (folder) {
   var trimmed = folder.trim();
 
@@ -15,9 +21,10 @@ function folderParts (folder) {
   var prefRemoved = trimmed
       .replace(/^\.\//,'')  // remove './' prefix
       .replace(/^\//, '')   // remove '/' prefix 
+    , camelCased = camelCase(prefRemoved)
     ;
 
-    return prefRemoved.split('/');
+  return camelCased.split('/');
 }
 
 function namespace(folder, root) {
@@ -26,16 +33,18 @@ function namespace(folder, root) {
       , parent = root;
 
     for (var i = 0; i < parts.length; i++) {
-        if (typeof parent[ parts[i] ] == 'undefined') {
-            parent[ parts[i] ] = { };
+      var key = camelCase(parts[i]);
+        if (typeof parent[ key ] == 'undefined') {
+            parent[ key ] = { };
         }
-        parent = parent[ parts[i] ];
+        parent = parent[ key ];
     }
     return { root: parent, path: parts.join('.') };
 }
 
 function plateNameFrom(filename) {
-  return filename.substr(0, filename.length - path.extname(filename).length);
+  var nameWithoutExt = filename.substr(0, filename.length - path.extname(filename).length);
+  return camelCase(nameWithoutExt);
 }
 
 function HotPlates () {
@@ -61,7 +70,7 @@ HotPlates.prototype.process = function (opts, watch, processFile, done) {
     var tasks = handlebarFiles.length;
 
     if (tasks === 0) {
-      done(null);
+      cb(null);
       return;
     }
     
@@ -96,7 +105,7 @@ HotPlates.prototype.process = function (opts, watch, processFile, done) {
 HotPlates.prototype.processTemplate = function (file, plate) {
   var plateName           =  plateNameFrom(file.name)
     , namespaced          =  namespace(file.parentDir, this.oven)
-    , namespacedPlateName =  namespaced.path + '.' + plateName;
+    , namespacedPlateName =  namespaced.path.length > 0 ? namespaced.path + '.' + plateName : plateName;
 
   namespaced.root[plateName] = handlebars.compile(plate);
   this.emit('templateCompiled', file, namespacedPlateName);
