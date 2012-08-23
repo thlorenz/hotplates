@@ -39,8 +39,8 @@ Watcher.prototype.watchTemplatesAndPartials = function () {
 
   function keepWarm(file, process) {
     watch(file, 'change', function (file) {
-      fs.readFile(file.fullPath,function (err, content) {
-        if (err) cb(err);
+      fs.readFile(file.fullPath, function (err, content) {
+        if (err) process(err);
         else process(file, content.toString());
       });
     });
@@ -49,6 +49,7 @@ Watcher.prototype.watchTemplatesAndPartials = function () {
   function watchTemplates(watchingAll) {
     self.templateFiles.forEach(function (file) {
       keepWarm(file, function (err, plate) {
+        // TODO: if error emit it
         self.emit('templateChanged', file, plate);
         self.emit('fileChanged', file, plate);
       });
