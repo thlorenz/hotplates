@@ -49,6 +49,8 @@ function plateNameFrom(filename) {
 
 function HotPlates () {
   this.oven               =  { };
+  this.plates             =  [ ];
+  this.parts              =  [ ];
   this.templateFiles      =  [ ];
   this.partialFiles       =  [ ];
   this.watchedDirectories =  { };
@@ -108,16 +110,22 @@ HotPlates.prototype.processTemplate = function (file, plate) {
     , namespacedPlateName =  namespaced.path.length > 0 ? namespaced.path + '.' + plateName : plateName;
 
   namespaced.root[plateName] = handlebars.compile(plate);
+
+  this.plates.push({ name: namespacedPlateName, value: handlebars.precompile(plate) });
+
   this.emit('templateCompiled', file, namespacedPlateName);
 };
 
 HotPlates.prototype.processPartial = function (file, partial) {
-  var plateName   =  plateNameFrom(file.name)
-    , namespaces  =  folderParts(file.parentDir)
-    , partialName =  namespaces.length === 0 ? plateName : namespaces.concat(plateName).join('.')
+  var plateName      =  plateNameFrom(file.name)
+    , namespaces     =  folderParts(file.parentDir)
+    , partialName    =  namespaces.length ===  0 ? plateName : namespaces.concat(plateName).join('.')
     ;
   
   handlebars.registerPartial(partialName, partial);
+
+  this.parts.push({ name: partialName, value: handlebars.precompile(partial) });
+  
   this.emit('partialRegistered', file, partialName);
 };
 
@@ -145,7 +153,13 @@ HotPlates.prototype.heat = function (opts, hot) {
 
   function thenProcessPartials (err) {
     if (err) hot(err);
-    else processPartials(opts.partials, thenWatch);
+    else processPartials(opts.partials, thenPrecompile);
+  }
+
+  function thenPrecompile (err) {
+    // TODO: skip if no precompilation and possibly move into separate module
+    if (err) hot(err);
+    else precompile(self.plates, self.parts, opts, thenWatch);
   }
 
   function thenWatch (err) {
@@ -178,13 +192,12 @@ HotPlates.prototype.burn = function () {
   Object.keys(self.oven).forEach(function (key) {
     delete self.oven[key];
   });
-  Object.keys(handlebars.partials).forEach(function (key) {
-    delete handlebars.partials[key]; 
-  });
   Object.keys(self.watchedDirectories).forEach(function (key) {
     delete self.watchedDirectories[key]; 
   });
 
+  self.parts = [];
+  self.plates = [];
   self.templateFiles = [];
   self.partialFiles = [];
 
@@ -199,3 +212,42 @@ module.exports = {
   , on   :  function () { hp.on.apply(hp, arguments); return this; }
   , oven :  hp.oven
 };
+
+
+function precompile(plates, parts, opts, cb) {
+  if (!opts.precompile) {
+    cb(null);
+    return;
+  }
+  
+  console.log('precompiling');
+
+  var output = [];
+  
+  if (opts.precompile.amd) {
+    output.push('define([\'' + opts.precompile.handlebarPath + 'handlebars\'], function(Handlebars) {\n');
+  } else {
+    output.push('(function() {\n');
+  }
+
+  output.push('  var template = Handlebars.template, templates = Handlebars.templates = Handlebars.templates || {};\n');
+
+  plates.forEach(function (plate) {
+      output.push('templates[\'' + plate.name + '\'] = template(' + plate.value + ');\n');
+  });
+
+  parts.forEach(function (part) {
+      output.push('Handlebars.registerPartial(\'' + part.name + '\', ' + 'template(' + part.value + '));\n');
+  });
+
+  if (opts.precompile.amd) {
+    output.push('});');
+  } else {
+    output.push('})();');
+  }
+  
+  output = output.join('');
+
+  fs.writeFileSync(opts.precompile.target, output);
+  cb(null);
+}
