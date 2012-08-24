@@ -103,14 +103,25 @@ describe('compiling and registering', function () {
   })
 
   describe('when plates are found in plates path', function () {
+      var batchStartedEmits = 0
+        , batchEndedEmits = 0
+        ;
+
       before(function (done) {
         plateCompileds = [];
+        
         
         hbStub.registerPartial = function () { throw new Error('no partials should be found and registered'); }
 
         hbs
-          .on('templateCompiled', function (file, name) {
-            plateCompileds.push({ file: file, name: name });  
+          .on('templateCompiled', function (file, name, plate) {
+            plateCompileds.push({ file: file, name: name, plate: plate});  
+          })
+          .on('batchStarted', function () {
+            batchStartedEmits++;
+          })
+          .on('batchEnded', function () {
+            batchEndedEmits++;
           })
           .heat({ templates: platesOpts }, function (err) {
               error = err;
@@ -128,7 +139,7 @@ describe('compiling and registering', function () {
         hbs.oven['platedos'].should.equal(memdos);
       })
 
-      it('emits "templateCompiled" for each plate', function () {
+      it('emits "templateCompiled" for each plate with correct file names', function () {
         var plateFilesNames = plateFiles.map(function (pf) { return pf.name; })
           , plateCompiledsFileNames = plateCompileds.map(function (pc) { return pc.file.name; });
 
@@ -136,6 +147,24 @@ describe('compiling and registering', function () {
         plateFilesNames.forEach(function (name) {
           plateCompiledsFileNames.should.include(name);
         });
+      })
+
+      it('emits "templateCompiled" for each plate with its name and template', function () {
+        var uno = plateCompileds[0];
+        uno.name.should.equal('plateuno');
+        uno.plate.should.equal('contuno');
+
+        var dos = plateCompileds[1];
+        dos.name.should.equal('platedos');
+        dos.plate.should.equal('contdos');
+      })
+
+      it('emits "batchStarted" exactly once', function () {
+        batchStartedEmits.should.equal(1);
+      })
+
+      it('emits "batchEnded" exactly once', function () {
+        batchEndedEmits.should.equal(1);
       })
 
       describe('when plates were found in absolute subfolder', function () {
@@ -267,6 +296,9 @@ describe('compiling and registering', function () {
     var memunoName
       , memdosName
       , partialRegistereds
+      , batchStartedEmits = 0
+      , batchEndedEmits = 0
+      ;
 
     before(function (done) {
       partialRegistereds = [];
@@ -279,13 +311,19 @@ describe('compiling and registering', function () {
         else                       throw new Error('Not setup for this content ' + cont);
       }
 
-      hbs = 
-        resolve({ rdp: { files: plateFiles } })
-          .on('partialRegistered', function (file, name) {
-            partialRegistereds.push({ file: file, name: name });  
-          });
+      hbs = resolve({ rdp: { files: plateFiles } });
 
-      hbs.heat({ partials: partialsOpts }, function (err) {
+      hbs
+        .on('partialRegistered', function (file, name, plate) {
+          partialRegistereds.push({ file: file, name: name, plate: plate });  
+        })
+        .on('batchStarted', function () {
+          batchStartedEmits++;
+        })
+        .on('batchEnded', function () {
+          batchEndedEmits++;
+        })
+        .heat({ partials: partialsOpts }, function (err) {
           error = err;
           done();
         });
@@ -308,6 +346,24 @@ describe('compiling and registering', function () {
       plateFilesNames.forEach(function (name) {
         partialRegisteredsFileNames.should.include(name);
       });
+    })
+
+    it('emits "partialRegistered" for each partial with its name and template', function () {
+      var uno = partialRegistereds[0];
+      uno.name.should.equal('plateuno');
+      uno.plate.should.equal('contuno');
+
+      var dos = partialRegistereds[1];
+      dos.name.should.equal('platedos');
+      dos.plate.should.equal('contdos');
+    })
+
+    it('emits "batchStarted" exactly once', function () {
+      batchStartedEmits.should.equal(1);
+    })
+
+    it('emits "batchEnded" exactly once', function () {
+      batchEndedEmits.should.equal(1);
     })
 
     describe('when partials were found in relative subfolder', function () {
@@ -348,7 +404,6 @@ describe('compiling and registering', function () {
         partialRegisteredsNames.should.include('sub.subsub.plateuno');
         partialRegisteredsNames.should.include('sub.subsub.platedos');
       })
-
     })
   })
 })

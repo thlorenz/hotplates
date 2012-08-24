@@ -72,7 +72,7 @@ HotPlates.prototype.processTemplate = function (file, plate) {
 
   //this.plates.push({ name: namespacedPlateName, value: handlebars.precompile(plate) });
 
-  this.emit('templateCompiled', file, namespacedPlateName);
+  this.emit('templateCompiled', file, namespacedPlateName, plate);
 };
 
 HotPlates.prototype.processPartial = function (file, partial) {
@@ -85,7 +85,7 @@ HotPlates.prototype.processPartial = function (file, partial) {
 
   //this.parts.push({ name: partialName, value: handlebars.precompile(partial) });
   
-  this.emit('partialRegistered', file, partialName);
+  this.emit('partialRegistered', file, partialName, partial);
 };
 
 HotPlates.prototype.heat = function (opts, hot) {
@@ -112,13 +112,15 @@ HotPlates.prototype.heat = function (opts, hot) {
 
   function thenProcessPartials (err) {
     if (err) hot(err);
-    else processPartials(opts.partials, thenPrecompile);
+    else processPartials(opts.partials, thenEmitBatchEnded);
   }
 
-  function thenPrecompile (err) {
-    // TODO: skip if no precompilation 
+  function thenEmitBatchEnded (err) {
     if (err) hot(err);
-    else thenWatch(null); // precompile(self.plates, self.parts, opts, thenWatch);
+    else { 
+      self.emit('batchEnded');
+      thenWatch(null);
+    }
   }
 
   function thenWatch (err) {
@@ -141,6 +143,8 @@ HotPlates.prototype.heat = function (opts, hot) {
 
   if (!opts.templates && !opts.partials) 
     throw new Error('Need to either define "templates" or "partials" options.');
+
+  this.emit('batchStarted');
 
   processTemplates(opts.templates, thenProcessPartials);
 };
