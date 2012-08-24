@@ -5,52 +5,11 @@ var fs         =  require('fs')
   , readdirp   =  require('readdirp')
   , handlebars =  require('handlebars')
   , watcher    =  require('./watcher')
+  , utl        =  require('./utl')
   ;
-
-function camelCase (name) {
-  return name
-    .replace(/([\-_][a-z])/g, function( $1 ){ return $1.toUpperCase(); }) // uppercase all letters after - and _
-    .replace(/[\-_]/g,''); // remove all - and _
-}
-
-function folderParts (folder) {
-  var trimmed = folder.trim();
-
-  if (trimmed === '') return [];
-
-  var prefRemoved = trimmed
-      .replace(/^\.\//,'')  // remove './' prefix
-      .replace(/^\//, '')   // remove '/' prefix 
-    , camelCased = camelCase(prefRemoved)
-    ;
-
-  return camelCased.split('/');
-}
-
-function namespace(folder, root) {
-
-    var parts = folderParts(folder)
-      , parent = root;
-
-    for (var i = 0; i < parts.length; i++) {
-      var key = camelCase(parts[i]);
-        if (typeof parent[ key ] == 'undefined') {
-            parent[ key ] = { };
-        }
-        parent = parent[ key ];
-    }
-    return { root: parent, path: parts.join('.') };
-}
-
-function plateNameFrom(filename) {
-  var nameWithoutExt = filename.substr(0, filename.length - path.extname(filename).length);
-  return camelCase(nameWithoutExt);
-}
 
 function HotPlates () {
   this.oven               =  { };
-  this.plates             =  [ ];
-  this.parts              =  [ ];
   this.templateFiles      =  [ ];
   this.partialFiles       =  [ ];
   this.watchedDirectories =  { };
@@ -105,26 +64,26 @@ HotPlates.prototype.process = function (opts, watch, processFile, done) {
 };
 
 HotPlates.prototype.processTemplate = function (file, plate) {
-  var plateName           =  plateNameFrom(file.name)
-    , namespaced          =  namespace(file.parentDir, this.oven)
+  var plateName           =  utl.plateNameFrom(file.name)
+    , namespaced          =  utl.namespace(file.parentDir, this.oven)
     , namespacedPlateName =  namespaced.path.length > 0 ? namespaced.path + '.' + plateName : plateName;
 
   namespaced.root[plateName] = handlebars.compile(plate);
 
-  this.plates.push({ name: namespacedPlateName, value: handlebars.precompile(plate) });
+  //this.plates.push({ name: namespacedPlateName, value: handlebars.precompile(plate) });
 
   this.emit('templateCompiled', file, namespacedPlateName);
 };
 
 HotPlates.prototype.processPartial = function (file, partial) {
-  var plateName      =  plateNameFrom(file.name)
-    , namespaces     =  folderParts(file.parentDir)
+  var plateName      =  utl.plateNameFrom(file.name)
+    , namespaces     =  utl.folderParts(file.parentDir)
     , partialName    =  namespaces.length ===  0 ? plateName : namespaces.concat(plateName).join('.')
     ;
   
   handlebars.registerPartial(partialName, partial);
 
-  this.parts.push({ name: partialName, value: handlebars.precompile(partial) });
+  //this.parts.push({ name: partialName, value: handlebars.precompile(partial) });
   
   this.emit('partialRegistered', file, partialName);
 };
@@ -157,9 +116,9 @@ HotPlates.prototype.heat = function (opts, hot) {
   }
 
   function thenPrecompile (err) {
-    // TODO: skip if no precompilation and possibly move into separate module
+    // TODO: skip if no precompilation 
     if (err) hot(err);
-    else precompile(self.plates, self.parts, opts, thenWatch);
+    else thenWatch(null); // precompile(self.plates, self.parts, opts, thenWatch);
   }
 
   function thenWatch (err) {
@@ -196,8 +155,6 @@ HotPlates.prototype.burn = function () {
     delete self.watchedDirectories[key]; 
   });
 
-  self.parts = [];
-  self.plates = [];
   self.templateFiles = [];
   self.partialFiles = [];
 
@@ -214,40 +171,3 @@ module.exports = {
 };
 
 
-function precompile(plates, parts, opts, cb) {
-  if (!opts.precompile) {
-    cb(null);
-    return;
-  }
-  
-  console.log('precompiling');
-
-  var output = [];
-  
-  if (opts.precompile.amd) {
-    output.push('define([\'' + opts.precompile.handlebarPath + 'handlebars\'], function(Handlebars) {\n');
-  } else {
-    output.push('(function() {\n');
-  }
-
-  output.push('  var template = Handlebars.template, templates = Handlebars.templates = Handlebars.templates || {};\n');
-
-  plates.forEach(function (plate) {
-      output.push('templates[\'' + plate.name + '\'] = template(' + plate.value + ');\n');
-  });
-
-  parts.forEach(function (part) {
-      output.push('Handlebars.registerPartial(\'' + part.name + '\', ' + 'template(' + part.value + '));\n');
-  });
-
-  if (opts.precompile.amd) {
-    output.push('});');
-  } else {
-    output.push('})();');
-  }
-  
-  output = output.join('');
-
-  fs.writeFileSync(opts.precompile.target, output);
-  cb(null);
-}
