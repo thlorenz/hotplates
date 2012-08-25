@@ -18,7 +18,7 @@ function preheat(opts, cb) {
   partials = {};
 
   header = opts.amd ?
-    'define([\'' + opts.handlebarPath + 'handlebars\'], function(Handlebars) {\n' :
+    'require([\'' + opts.handlebarsPath + '/handlebars\'], function(Handlebars) {\n' :
     '(function() {\n';
 
   header = header + 

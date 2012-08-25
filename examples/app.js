@@ -8,11 +8,12 @@ var hotplates  =  require('../hotplates')
 
 preheat(
     { amd: true
+    , handlebarsPath: '../node_modules/handlebars'
     , target: path.join(__dirname, 'preheated.js')
     }
   , function (err, data) {
       if (err) console.error(err);
-      else console.log(data);
+      else console.log('preheated templates');
     }
   );
 
@@ -57,8 +58,7 @@ function renderSite(err) {
     };
 
   var rendered = handlebars.templates['index'](ctx);
-  console.log(rendered);
-  //fs.writeFileSync('./index.html', rendered);
+  fs.writeFileSync('./index.html', rendered);
 
-//  exec('open ' + './index.html');
+  exec('open ' + './index.html');
 }

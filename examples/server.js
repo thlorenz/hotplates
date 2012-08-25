@@ -1,4 +1,5 @@
 var hotplates  =  require('../hotplates')
+  , preheat    =  require('../preheat')
   , handlebars =  require('handlebars')
   , path       =  require('path')
   , http       =  require('http')
@@ -25,7 +26,7 @@ function renderSite () {
         }
     };
 
-  var site = hotplates.oven.index(ctx);
+  var site = handlebars.templates.index(ctx);
   return site;
 }
 
@@ -39,6 +40,17 @@ function serveSite () {
 
   console.log('Server running at localhost:', PORT);
 }
+
+preheat(
+    { amd: true
+    , handlebarsPath: '../node_modules/handlebars'
+    , target: path.join(__dirname, 'preheated.js')
+    }
+  , function (err, data) {
+      if (err) console.error(err);
+      else console.log('preheated templates');
+    }
+  );
 
 hotplates
   .on('templateCompiled', function (fileInfo, name) { 
