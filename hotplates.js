@@ -1,51 +1,11 @@
 var fs         =  require('fs')
-  , path       =  require('path')
   , util       =  require('util')
   , events     =  require('events')
   , readdirp   =  require('readdirp')
   , handlebars =  require('handlebars')
   , watcher    =  require('./watcher')
+  , utl        =  require('./utl')
   ;
-
-function camelCase (name) {
-  return name
-    .replace(/([\-_][a-z])/g, function( $1 ){ return $1.toUpperCase(); }) // uppercase all letters after - and _
-    .replace(/[\-_]/g,''); // remove all - and _
-}
-
-function folderParts (folder) {
-  var trimmed = folder.trim();
-
-  if (trimmed === '') return [];
-
-  var prefRemoved = trimmed
-      .replace(/^\.\//,'')  // remove './' prefix
-      .replace(/^\//, '')   // remove '/' prefix 
-    , camelCased = camelCase(prefRemoved)
-    ;
-
-  return camelCased.split('/');
-}
-
-function namespace(folder, root) {
-
-    var parts = folderParts(folder)
-      , parent = root;
-
-    for (var i = 0; i < parts.length; i++) {
-      var key = camelCase(parts[i]);
-        if (typeof parent[ key ] == 'undefined') {
-            parent[ key ] = { };
-        }
-        parent = parent[ key ];
-    }
-    return { root: parent, path: parts.join('.') };
-}
-
-function plateNameFrom(filename) {
-  var nameWithoutExt = filename.substr(0, filename.length - path.extname(filename).length);
-  return camelCase(nameWithoutExt);
-}
 
 function HotPlates () {
   this.oven               =  { };
@@ -103,22 +63,24 @@ HotPlates.prototype.process = function (opts, watch, processFile, done) {
 };
 
 HotPlates.prototype.processTemplate = function (file, plate) {
-  var plateName           =  plateNameFrom(file.name)
-    , namespaced          =  namespace(file.parentDir, this.oven)
+  var plateName           =  utl.plateNameFrom(file.name)
+    , namespaced          =  utl.namespace(file.parentDir, this.oven)
     , namespacedPlateName =  namespaced.path.length > 0 ? namespaced.path + '.' + plateName : plateName;
 
   namespaced.root[plateName] = handlebars.compile(plate);
-  this.emit('templateCompiled', file, namespacedPlateName);
+
+  this.emit('templateCompiled', file, namespacedPlateName, plate);
 };
 
 HotPlates.prototype.processPartial = function (file, partial) {
-  var plateName   =  plateNameFrom(file.name)
-    , namespaces  =  folderParts(file.parentDir)
-    , partialName =  namespaces.length === 0 ? plateName : namespaces.concat(plateName).join('.')
+  var plateName      =  utl.plateNameFrom(file.name)
+    , namespaces     =  utl.folderParts(file.parentDir)
+    , partialName    =  namespaces.length ===  0 ? plateName : namespaces.concat(plateName).join('.')
     ;
   
   handlebars.registerPartial(partialName, partial);
-  this.emit('partialRegistered', file, partialName);
+
+  this.emit('partialRegistered', file, partialName, partial);
 };
 
 HotPlates.prototype.heat = function (opts, hot) {
@@ -145,7 +107,15 @@ HotPlates.prototype.heat = function (opts, hot) {
 
   function thenProcessPartials (err) {
     if (err) hot(err);
-    else processPartials(opts.partials, thenWatch);
+    else processPartials(opts.partials, thenEmitBatchEnded);
+  }
+
+  function thenEmitBatchEnded (err) {
+    if (err) hot(err);
+    else { 
+      self.emit('batchEnded');
+      thenWatch(null);
+    }
   }
 
   function thenWatch (err) {
@@ -169,6 +139,8 @@ HotPlates.prototype.heat = function (opts, hot) {
   if (!opts.templates && !opts.partials) 
     throw new Error('Need to either define "templates" or "partials" options.');
 
+  this.emit('batchStarted');
+
   processTemplates(opts.templates, thenProcessPartials);
 };
 
@@ -178,8 +150,11 @@ HotPlates.prototype.burn = function () {
   Object.keys(self.oven).forEach(function (key) {
     delete self.oven[key];
   });
+  Object.keys(handlebars.templates).forEach(function (key) {
+    delete handlebars.templates[key];
+  });
   Object.keys(handlebars.partials).forEach(function (key) {
-    delete handlebars.partials[key]; 
+    delete handlebars.partials[key];
   });
   Object.keys(self.watchedDirectories).forEach(function (key) {
     delete self.watchedDirectories[key]; 
@@ -188,6 +163,7 @@ HotPlates.prototype.burn = function () {
   self.templateFiles = [];
   self.partialFiles = [];
 
+  self.emit('burned');
   return module.exports;
 };
 
