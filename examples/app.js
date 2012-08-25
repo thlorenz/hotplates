@@ -41,7 +41,7 @@ function renderSite(err) {
         }
     };
 
-  var rendered = hotplates.oven.index(ctx);
+  var rendered = handlebars.templates['index'](ctx);
   fs.writeFileSync('./index.html', rendered);
 
   exec('open ' + './index.html');

@@ -8,7 +8,7 @@ var fs         =  require('fs')
   ;
 
 function HotPlates () {
-  this.oven               =  { };
+  handlebars.templates    =  { };
   this.templateFiles      =  [ ];
   this.partialFiles       =  [ ];
   this.watchedDirectories =  { };
@@ -63,13 +63,14 @@ HotPlates.prototype.process = function (opts, watch, processFile, done) {
 };
 
 HotPlates.prototype.processTemplate = function (file, plate) {
-  var plateName           =  utl.plateNameFrom(file.name)
-    , namespaced          =  utl.namespace(file.parentDir, this.oven)
-    , namespacedPlateName =  namespaced.path.length > 0 ? namespaced.path + '.' + plateName : plateName;
+  var plateName    =  utl.plateNameFrom(file.name)
+    , namespaces   =  utl.folderParts(file.parentDir)
+    , fullName =  namespaces.length ===  0 ? plateName : namespaces.concat(plateName).join('.')
+    ;
 
-  namespaced.root[plateName] = handlebars.compile(plate);
+  handlebars.templates[fullName] = handlebars.compile(plate);
 
-  this.emit('templateCompiled', file, namespacedPlateName, plate);
+  this.emit('templateCompiled', file, fullName, plate);
 };
 
 HotPlates.prototype.processPartial = function (file, partial) {
@@ -147,9 +148,6 @@ HotPlates.prototype.heat = function (opts, hot) {
 HotPlates.prototype.burn = function () {
   var self = this;
 
-  Object.keys(self.oven).forEach(function (key) {
-    delete self.oven[key];
-  });
   Object.keys(handlebars.templates).forEach(function (key) {
     delete handlebars.templates[key];
   });
@@ -173,5 +171,4 @@ module.exports = {
     heat :  function () { hp.heat.apply(hp, arguments); return this; }
   , burn :  function () { hp.burn.apply(hp, arguments); return this; }
   , on   :  function () { hp.on.apply(hp, arguments); return this; }
-  , oven :  hp.oven
 };
