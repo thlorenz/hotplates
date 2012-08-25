@@ -18,7 +18,7 @@ function preheat(opts, cb) {
   partials = {};
 
   header = opts.amd ?
-    'require([\'' + opts.handlebarsPath + '/handlebars\'], function(Handlebars) {\n' :
+    'require([\'' + opts.handlebarsSrc + '\'], function(Handlebars) {\n' :
     '(function() {\n';
 
   header = header + 

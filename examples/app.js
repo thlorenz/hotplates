@@ -8,7 +8,7 @@ var hotplates  =  require('..')
 hotplates
   .preheat(
     { amd: true
-    , handlebarsPath: '../node_modules/handlebars'
+    , handlebarsSrc: '../node_modules/handlebars/handlebars'
     , target: path.join(__dirname, 'preheated.js')
     }
   , function (err, data) {
