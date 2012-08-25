@@ -34,6 +34,8 @@ function resolve (stubOpts) {
 
 describe('when looking for plates and partials', function () {
   before(function (done) {
+    hbStub.templates = {};
+    hbStub.partials = {};
     resolve( { rdp: { files: [], err: null } } )
       .heat({ templates: platesOpts, partials: partialsOpts} , done);
   })
@@ -165,6 +167,35 @@ describe('compiling and registering', function () {
 
       it('emits "batchEnded" exactly once', function () {
         batchEndedEmits.should.equal(1);
+      })
+
+      describe('and I burn templates and partials', function () {
+        var burnedEmitted;
+
+        before(function () {
+          burnedEmitted = false;
+          hbStub.templates = { plate: 'some plate' };
+          hbStub.partials = { plate: 'some plate' };
+
+          hbs.on('burned', function () { burnedEmitted = true; });
+          hbs.burn();
+        })  
+
+        it('deletes all templates from oven', function () {
+          Object.keys(hbs.oven).should.have.length(0);
+        })
+
+        it('deletes all templates from handlebars', function () {
+          Object.keys(hbStub.templates).should.have.length(0);
+        })
+
+        it('deletes all partials from handlebars', function () {
+          Object.keys(hbStub.partials).should.have.length(0);
+        })
+
+        it('emits "burned" event ', function () {
+          burnedEmitted.should.equal(true);  
+        })
       })
 
       describe('when plates were found in absolute subfolder', function () {
@@ -406,4 +437,5 @@ describe('compiling and registering', function () {
       })
     })
   })
+
 })

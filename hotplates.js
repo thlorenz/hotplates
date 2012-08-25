@@ -150,6 +150,12 @@ HotPlates.prototype.burn = function () {
   Object.keys(self.oven).forEach(function (key) {
     delete self.oven[key];
   });
+  Object.keys(handlebars.templates).forEach(function (key) {
+    delete handlebars.templates[key];
+  });
+  Object.keys(handlebars.partials).forEach(function (key) {
+    delete handlebars.partials[key];
+  });
   Object.keys(self.watchedDirectories).forEach(function (key) {
     delete self.watchedDirectories[key]; 
   });
@@ -157,6 +163,7 @@ HotPlates.prototype.burn = function () {
   self.templateFiles = [];
   self.partialFiles = [];
 
+  self.emit('burned');
   return module.exports;
 };
 
