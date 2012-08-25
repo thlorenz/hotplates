@@ -1,9 +1,20 @@
 var hotplates  =  require('../hotplates')
+  , preheat    =  require('../preheat')
   , handlebars =  require('handlebars')
   , path       =  require('path')
   , fs         =  require('fs')
   , exec       =  require('child_process').exec
   ;
+
+preheat(
+    { amd: true
+    , target: path.join(__dirname, 'preheated.js')
+    }
+  , function (err, data) {
+      if (err) console.error(err);
+      else console.log(data);
+    }
+  );
 
 hotplates
   .on('templateCompiled', function (fileInfo, name) { 
@@ -46,7 +57,8 @@ function renderSite(err) {
     };
 
   var rendered = handlebars.templates['index'](ctx);
-  fs.writeFileSync('./index.html', rendered);
+  console.log(rendered);
+  //fs.writeFileSync('./index.html', rendered);
 
-  exec('open ' + './index.html');
+//  exec('open ' + './index.html');
 }
