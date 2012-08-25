@@ -35,14 +35,14 @@ hotplates.heat(
   , renderSite);
 ```
 
-This compiles *index.hbs*, makes it accessible via `hotplates.oven.index` and
+This compiles *index.hbs*, makes it accessible via `handlebars.templates['index']` and
 registers the following partials with handlebars:
 
-    site.content          
-    site.header           
-    oven.partsIndex            
-    oven.filter.collector 
-    oven.filter.handle    
+   'site.content'          
+   'site.header'           
+   'oven.parts-index'            
+   'oven.filter.collector'
+   'oven.filter.handle'    
 
 They are now accessible under that name in other templates and partials.
 
@@ -123,27 +123,27 @@ Templates with names and paths containing underscores or dashes will be [camelCa
 E.g., 'dashed-path/underscored_name.hbs' is compiled/registered as 'dashedPath/underscoredName'
 
 
-## The oven
+## The templates
 
-***hotplates.oven***
+***handlebars.templates***
 
-After you heated your templates, they are shoved into the oven, namespaced according to the path they where found in.
+After you heated your templates, they are registered as `handlebars.templates` namespaced according to the path they where found in.
 
-E.g., a template found at 'site/reader/book.hbs' will be stored as a compiled `Function` under `hotplates.oven.site.reader.book`.
+E.g., a template found at 'site/reader/book.hbs' will be stored as a compiled `Function` under `handlebars.templates['oven.site.reader.book']`.
 
 ## Registered Partials
 
-Partials are registered in a similar fashion, but not shoved into the oven as they are registered with handlebars instead. 
-
-However the namespacing schema for them is exactly the same.
+Partials are registered in a similar fashion as `handlebars.partials`.
 
 Assuming the partial root was 'templates/partials', a partial found at 'templates/partials/book/page.hbs' will be accessible in other templates and partials under the name `book.page`.
+
+Additionally you can access this partial directly via `handlebars.partials['book.page']`.
 
 ## Burning templates
 
 ***burn()***
 
-In order to remove all templates from the oven and unregister all partials, you can burn them.
+In order to remove all templates from handlebars and unregister all partials, you can burn them.
 
 This is useful in cases where you want to make sure that no obsolete templates or partials are sticking around.
 

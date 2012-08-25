@@ -1,8 +1,8 @@
 var hotplates  =  require('../hotplates')
   , handlebars =  require('handlebars')
   , path       =  require('path')
-  , http = require('http')
-  , PORT = 3000
+  , http       =  require('http')
+  , PORT       =  3000
   ;
 
 function renderSite () {

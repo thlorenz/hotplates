@@ -37,5 +37,5 @@ var namespace = module.exports.namespace = function (folder, root) {
 
 var plateNameFrom =  module.exports.plateNameFrom = function (filename) {
   var nameWithoutExt = filename.substr(0, filename.length - path.extname(filename).length);
-  return camelCase(nameWithoutExt);
+  return nameWithoutExt;
 };

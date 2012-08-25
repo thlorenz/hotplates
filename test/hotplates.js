@@ -135,10 +135,10 @@ describe('compiling and registering', function () {
         should.not.exist(error);
       })
     
-      it('adds each plate under its name to the oven', function () {
-        Object.keys(hbs.oven).length.should.equal(2);
-        hbs.oven['plateuno'].should.equal(memuno);
-        hbs.oven['platedos'].should.equal(memdos);
+      it('adds each plate under its name to handlebars templates', function () {
+        Object.keys(hbStub.templates).length.should.equal(2);
+        hbStub.templates['plateuno'].should.equal(memuno);
+        hbStub.templates['platedos'].should.equal(memdos);
       })
 
       it('emits "templateCompiled" for each plate with correct file names', function () {
@@ -181,10 +181,6 @@ describe('compiling and registering', function () {
           hbs.burn();
         })  
 
-        it('deletes all templates from oven', function () {
-          Object.keys(hbs.oven).should.have.length(0);
-        })
-
         it('deletes all templates from handlebars', function () {
           Object.keys(hbStub.templates).should.have.length(0);
         })
@@ -214,9 +210,9 @@ describe('compiling and registering', function () {
         })
         
         it('adds handledbar for each plate under its name at namespace reflecting subfolders', function () {
-          Object.keys(hbs.oven).length.should.equal(1);
-          hbs.oven.sub.subsub.plateuno.should.equal(memuno);
-          hbs.oven.sub.subsub.platedos.should.equal(memdos);
+          Object.keys(hbStub.templates).length.should.equal(2);
+          hbStub.templates['sub.subsub.plateuno'].should.equal(memuno);
+          hbStub.templates['sub.subsub.platedos'].should.equal(memdos);
         })
       })
 
@@ -242,9 +238,9 @@ describe('compiling and registering', function () {
         })
         
         it('adds handledbar for each plate under its name at namespace reflecting subfolders', function () {
-          Object.keys(hbs.oven).length.should.equal(1);
-          hbs.oven.sub.subsub.plateuno.should.equal(memuno);
-          hbs.oven.sub.subsub.platedos.should.equal(memdos);
+          Object.keys(hbStub.templates).length.should.equal(2);
+          hbStub.templates['sub.subsub.plateuno'].should.equal(memuno);
+          hbStub.templates['sub.subsub.platedos'].should.equal(memdos);
         })
 
         it('emits "templateCompiled" for each template including namespaced name', function () {
@@ -261,44 +257,6 @@ describe('compiling and registering', function () {
           plateCompiledsNames.should.include('sub.subsub.platedos');
         })
 
-      })
-
-      describe('when plates "dashed-folder/name-with-dashes.hbs" and "underscored_folder/name_with__underscores" are found', function () {
-        var specialPlateFiles = [
-              { name      :  'name-with-dashes.hbs'
-              , parentDir :  'dashed-folder'
-              , fullPath  :  'does/not/matter/here'
-              }
-            , { name      :  'name_with__underscores.hbs'
-              , parentDir :  'underscored_folder'
-              , fullPath  :  'does/not/matter/here'
-              }
-            ]
-          , localhbs;
-
-        before(function (done) {
-
-          localhbs = proxyquire
-            .resolve('../hotplates', __dirname, { 
-                fs         :  { readFile:  function (p, cb) { cb(null, 'not important here'); } }
-              , handlebars :  { compile: function () { return 'not needed'; } }
-              , readdirp   :  function (opts, cb) {
-                  readdirpOpts.push(opts);
-                  cb(null, { files: specialPlateFiles }); 
-                }
-            })
-            .heat({ templates: specialPlateFiles }, function (err) {
-              done();
-            });
-        })
-        
-        it('adds plate "dashedFolder.nameWithDashes to oven', function () {
-          should.exist(localhbs.oven.dashedFolder.nameWithDashes);
-        })
-
-        it('adds plate "underscoredFolder.nameWithUnderscores to oven', function () {
-          should.exist(localhbs.oven.underscoredFolder.nameWithUnderscores);
-        })
       })
   })
 
@@ -318,7 +276,7 @@ describe('compiling and registering', function () {
     })
   
     it('adds no handledbar', function () {
-      Object.keys(hbs.oven).length.should.equal(0);
+      Object.keys(hbStub.templates).length.should.equal(0);
     })
   })
 
