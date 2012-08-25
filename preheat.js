@@ -50,6 +50,8 @@ function preheat(opts, cb) {
     batching = false;  
     update();
   });
+
+  return hotplates;
 }
 
 function update () {

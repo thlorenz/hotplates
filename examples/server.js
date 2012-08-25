@@ -1,4 +1,4 @@
-var hotplates  =  require('../hotplates')
+var hotplates  =  require('..')
   , preheat    =  require('../preheat')
   , handlebars =  require('handlebars')
   , path       =  require('path')
@@ -41,7 +41,8 @@ function serveSite () {
   console.log('Server running at localhost:', PORT);
 }
 
-preheat(
+hotplates
+  .preheat(
     { amd: true
     , handlebarsPath: '../node_modules/handlebars'
     , target: path.join(__dirname, 'preheated.js')
@@ -50,9 +51,7 @@ preheat(
       if (err) console.error(err);
       else console.log('preheated templates');
     }
-  );
-
-hotplates
+  )
   .on('templateCompiled', function (fileInfo, name) { 
     console.log('Compiled: \t[ %s ] as [ %s ]', fileInfo.path, name); 
   })
