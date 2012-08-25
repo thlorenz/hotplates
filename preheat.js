@@ -1,39 +1,84 @@
-var plates =  [ ]
-  , parts  =  [ ]
+var fs         =  require('fs')
+  , handlebars =  require('handlebars')
+  , hotplates  =  require('./hotplates')
+  , plates  
+  , partials
+  , header
+  , footer
+  , preheated
+  , target
+  , batching
   ;
 
-function preheat(plates, parts, opts, cb) {
-  if (!opts.precompile) {
-    cb(null);
-    return;
-  }
+function preheat(opts, cb) {
   
+  preheated = cb || function () { };
+
+  plates = {};
+  partials = {};
+
+  header = opts.amd ?
+    'define([\'' + opts.handlebarPath + 'handlebars\'], function(Handlebars) {\n' :
+    '(function() {\n';
+
+  header = header + 
+    '  var template = Handlebars.template, templates = Handlebars.templates = Handlebars.templates || {};\n';
+
+  footer = opts.amd ?  '});' : '})();';
+  target = opts.target;
+
+  hotplates.on('templateCompiled', function (file, name, plate) {
+    plates[name] = plate;
+    update();
+  });
+
+  hotplates.on('partialRegistered', function (file, name, partial) {
+    partials[name] = partial;
+    update();
+  });
+
+  hotplates.on('burned', function () {
+    plates =  {};
+    partials = {};
+  });
+
+  hotplates.on('batchStarted', function () {
+    batching = true;  
+  });
+
+  hotplates.on('batchEnded', function () {
+    batching = false;  
+    update();
+  });
+}
+
+function update () {
+  
+  // When heating templates in batch, don't precompile them each time, but rather when the batch ended
+  if (batching) return;
+
   var output = [];
-  
-  if (opts.precompile.amd) {
-    output.push('define([\'' + opts.precompile.handlebarPath + 'handlebars\'], function(Handlebars) {\n');
-  } else {
-    output.push('(function() {\n');
-  }
 
-  output.push('  var template = Handlebars.template, templates = Handlebars.templates = Handlebars.templates || {};\n');
+  output.push(header);
 
-  plates.forEach(function (plate) {
-      output.push('templates[\'' + plate.name + '\'] = template(' + plate.value + ');\n');
+  Object.keys(plates).forEach(function (name) {
+    output.push('templates[\'' + name + '\'] = template(' + handlebars.precompile(plates[name]) + ');\n');
   });
 
-  parts.forEach(function (part) {
-      output.push('Handlebars.registerPartial(\'' + part.name + '\', ' + 'template(' + part.value + '));\n');
+  Object.keys(partials).forEach(function (name) {
+      output.push('Handlebars.registerPartial(\'' + name + '\', ' + 
+                  'template(' + handlebars.precompile(partials[name]) + '));\n');
   });
 
-  if (opts.precompile.amd) {
-    output.push('});');
-  } else {
-    output.push('})();');
-  }
+  output.push(footer);
   
   output = output.join('');
 
-  fs.writeFileSync(opts.precompile.target, output);
-  cb(null);
+
+  fs.writeFile(target, output, function (err) {
+    if (err) console.trace();
+    preheated(err, output);
+  });
 }
+
+module.exports = preheat;

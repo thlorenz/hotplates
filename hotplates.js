@@ -1,5 +1,4 @@
 var fs         =  require('fs')
-  , path       =  require('path')
   , util       =  require('util')
   , events     =  require('events')
   , readdirp   =  require('readdirp')
@@ -70,8 +69,6 @@ HotPlates.prototype.processTemplate = function (file, plate) {
 
   namespaced.root[plateName] = handlebars.compile(plate);
 
-  //this.plates.push({ name: namespacedPlateName, value: handlebars.precompile(plate) });
-
   this.emit('templateCompiled', file, namespacedPlateName, plate);
 };
 
@@ -83,8 +80,6 @@ HotPlates.prototype.processPartial = function (file, partial) {
   
   handlebars.registerPartial(partialName, partial);
 
-  //this.parts.push({ name: partialName, value: handlebars.precompile(partial) });
-  
   this.emit('partialRegistered', file, partialName, partial);
 };
 
@@ -173,5 +168,3 @@ module.exports = {
   , on   :  function () { hp.on.apply(hp, arguments); return this; }
   , oven :  hp.oven
 };
-
-
