@@ -18,7 +18,9 @@ function preheat(opts, cb) {
   partials = {};
 
   header = opts.amd ?
-    'require([\'' + opts.handlebarsSrc + '\'], function(Handlebars) {\n' :
+    'require([\'' + opts.handlebarsSrc + '\'], function(HandlebarsArg) {\n' +
+    // until handlebars is fully amd compliant we patch it
+    '  var Handlebars = HandlebarsArg || Handlebars;' :
     '(function() {\n';
 
   header = header + 
