@@ -96,6 +96,7 @@ Heats your templates according to the given opts and calls back when they are ho
 At that point compiled templates are available in the oven and partials where registered with handlebars.
 
 Typical opts:
+
 ```javascript
 { templates:
   { root: path.join(__dirname, 'templates') // tell hotplates where your templates are
@@ -115,13 +116,6 @@ Additional options can be given to `templates` and `partials`, most commonly you
 
 Since hotplates resolves templates and partials using [readdirp](https://github.com/thlorenz/readdirp),
 refer to its [options documentation](https://github.com/thlorenz/readdirp#options).
-
-### Naming Conventions 
-
-Templates with names and paths containing underscores or dashes will be [camelCased](http://en.wikipedia.org/wiki/CamelCase).
-
-E.g., 'dashed-path/underscored_name.hbs' is compiled/registered as 'dashedPath/underscoredName'
-
 
 ## The templates
 
