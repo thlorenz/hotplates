@@ -167,7 +167,6 @@ hotplates
   .heat({ ... }, serveSite );
 ```
 
-
 # Tests
 
 Reading the [tests](https://github.com/thlorenz/hotplates/blob/master/test/hotplates.js) 
