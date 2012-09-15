@@ -4,7 +4,7 @@
   "description": "Compiles and stores handlebars templates and registers partials for faster view resolution.",
   "main": "index.js",
   "engines": {
-    "node": ">=0.4 && <=0.9"
+    "node": ">=0.6 && <=0.9"
   },
   "scripts": {
     "test": "mocha"
