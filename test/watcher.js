@@ -68,7 +68,7 @@ describe('when i create a watcher with template and partial files', function () 
     changedFileContent = null;
   }
 
-  before(function () {
+  beforeEach(function () {
     watchedFiles = [];
 
     fsStub.watch = function (file, opts, cb) {
@@ -125,7 +125,7 @@ describe('when i create a watcher with template and partial files', function () 
 
   describe('when plateuno changed', function () {
 
-    before(function () {
+    beforeEach(function () {
       reset();
       fileChanged[plateunoFullPath]('change');  
     })
@@ -143,7 +143,7 @@ describe('when i create a watcher with template and partial files', function () 
 
   describe('when platedos changed', function () {
 
-    before(function () {
+    beforeEach(function () {
       reset();
       fileChanged[platedosFullPath]('change');  
     })
@@ -161,7 +161,7 @@ describe('when i create a watcher with template and partial files', function () 
 
   describe('when partialuno changed', function () {
 
-    before(function () {
+    beforeEach(function () {
       reset();
       fileChanged[partialunoFullPath]('change');  
     })
@@ -179,7 +179,7 @@ describe('when i create a watcher with template and partial files', function () 
 
   describe('when partialdos changed', function () {
 
-    before(function () {
+    beforeEach(function () {
       reset();
       fileChanged[partialdosFullPath]('change');  
     })
@@ -205,7 +205,7 @@ describe('when i create a watcher with template directories', function () {
     , sut
     ;
 
-  before(function () {
+  beforeEach(function () {
     fsStub.watch = function (directory, opts, cb) {
       changeIn[directory] = cb;
       watchedDirectories.push(directory);
@@ -222,7 +222,7 @@ describe('when i create a watcher with template directories', function () {
   describe('when fs.watch says a directory was "renamed" e.g., when a file was added', function () {
     
     var changedDirectories;
-    before(function () {
+    beforeEach(function () {
       changedDirectories = [];
       sut.on('directoryChanged', function (directory) {
         changedDirectories.push(directory);
