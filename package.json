@@ -20,7 +20,7 @@
     "html",
     "partials"
   ],
-  "author": "Thorsten Lorenz <thlorenz@gmx.de> (http://thorstenlorenz/wordpress.com)",
+  "author": "Thorsten Lorenz <thlorenz@gmx.de> (http://thlorenz.com)",
   "license": "MIT",
   "devDependencies": {
     "proxyquire": "~0.3.2",
