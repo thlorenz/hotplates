@@ -23,7 +23,7 @@
   "author": "Thorsten Lorenz <thlorenz@gmx.de> (http://thlorenz.com)",
   "license": "MIT",
   "devDependencies": {
-    "proxyquire": "~0.3.2",
+    "proxyquire": "~0.3.5",
     "mocha": "~1.3.2",
     "should": "~1.1.0"
   },
