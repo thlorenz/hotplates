@@ -21,8 +21,10 @@ var proxyquire   =  require('proxyquire')
     }
   ;
 
+var stubOpts;
+
 function resolve (stubOpts) {
-  return proxyquire.resolve('../hotplates', __dirname, { 
+  return proxyquire('../hotplates', { 
       fs         :  fsStub
     , handlebars :  hbStub
     , readdirp   :  function (opts, cb) {

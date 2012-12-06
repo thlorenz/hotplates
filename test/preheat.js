@@ -39,7 +39,7 @@ describe('preheating templates and partials', function () {
   }
 
   before(function () {
-    var preheat = proxyquire.resolve ('../preheat', __dirname, {
+    var preheat = proxyquire('../preheat', {
         './hotplates' :  hpStub
       , handlebars    :  hbStub
       , fs            :  fsStub

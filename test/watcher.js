@@ -9,8 +9,7 @@ var assert     =  require('assert')
   ;
 
 function resolve () {
-  return proxyquire
-    .resolve('../watcher', __dirname, { 
+  return proxyquire('../watcher', { 
         fs :  fsStub
     })
     ._overrideMinDuration(0)
